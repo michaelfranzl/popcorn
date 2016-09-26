@@ -188,35 +188,3 @@ void MainWindow::onZoomOut() {
     webView->page()->mainFrame()->setZoomFactor(z);
     settings->setValue("zoom_factor", z);
 }
-
-// copies recursively, but destination dir must exist
-bool MainWindow::copyPath(QString src_path, QString dst_path) {
-    QDir src_dir(src_path);
-    if (! src_dir.exists()) {
-        qDebug() << "Level0: MainWindow::copyPath(): src dir not existing";
-        return false;
-    }
-
-    QDir dst_dir(dst_path);
-    if (! dst_dir.exists()) {
-        qDebug() << "Level0: MainWindow::copyPath(): dst dir not existing";
-        return false;
-    }
-
-    // first create all dirs recursively
-    foreach (QString subdirpath, src_dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-        QString dst_path_new = dst_path + QDir::separator() + subdirpath;
-        bool result = src_dir.mkpath(dst_path_new); // works independent of dst_path existing
-        if (!result) return false;
-        qDebug() << "Level0: MainWindow::copyPath():  creating dir" << result << dst_path_new;
-        copyPath(src_path + QDir::separator() + subdirpath, dst_path_new); // recursion
-    }
-
-    // next copy all files without recursion
-    foreach (QString fname, src_dir.entryList(QDir::Files)) {
-        bool result = QFile::copy(src_path + QDir::separator() + fname, dst_path + QDir::separator() + fname);
-        if (!result) return false;
-        qDebug() << "Level0: MainWindow::copyPath():  copy file" << result << fname;
-    }
-    return true;
-}

@@ -79,10 +79,6 @@ private:
     Database *m_db;
 
 
-    //methods
-    bool copyPath(QString src_path, QString dst_path);
-
-
 public slots:
     void attachJsApi();
     void onZoomIn();
