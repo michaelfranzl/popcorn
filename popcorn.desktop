@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=popcorn
+Comment=Instant messaging for the LAN
+Exec=/opt/popcorn/popcorn
+Icon=popcorn.png
+Terminal=false
+Type=Application
+Encoding=UTF-8
+Categories=Network;Application;
