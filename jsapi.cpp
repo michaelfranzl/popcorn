@@ -41,11 +41,10 @@ JsApi::JsApi(MainWindow *parent) :
 
 #ifdef Q_OS_MAC
     QShortcut *showOptionsShortcut = new QShortcut(QKeySequence(Qt::ControlModifier + Qt::Key_O), m_mainWindow);
-    connect( showOptionsShortcut, SIGNAL(activated()), this, SLOT(showOptionsDialog()));
 #else
     QShortcut *showOptionsShortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_O), m_mainWindow);
-    connect(showOptionsShortcut, SIGNAL(activated()), this, SLOT(showOptionsDialog()));
 #endif
+    connect(showOptionsShortcut, &QShortcut::activated, this, &JsApi::showOptionsDialog);
 }
 
 // ================== private =======================
@@ -70,7 +69,7 @@ bool JsApi::createUdpServer(qint16 port) {
     if (m_server_udp_started) return true;
     m_udpServer = new QUdpSocket(this);
     m_server_udp_started = m_udpServer->bind(port, QUdpSocket::DontShareAddress);
-    connect(m_udpServer, SIGNAL(readyRead()), this, SLOT(onUdpDatagramReceived()));
+    connect(m_udpServer, &QUdpSocket::readyRead, this, &JsApi::onUdpDatagramReceived);
     return m_server_udp_started;
 }
 

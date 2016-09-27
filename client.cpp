@@ -81,7 +81,7 @@ int Client::getState() {
 
 
 bool Client::createSocket(bool is_server, int sd) {
-    qDebug() << "Level0 [Client::createSocket] begin" << m_id << is_server << sd;
+    qDebug() << "Level1 [Client::createSocket] begin" << m_id << is_server << sd;
 
     m_socket = new QSslSocket(this);
 
@@ -96,11 +96,19 @@ bool Client::createSocket(bool is_server, int sd) {
         qDebug() << "Level0 [Client::createSocket] RESULT OF CERTS" << application_path + "/certs/*.pem" << result;
     }
 
+    /*
+    connect(m_socket, &QSslSocket::encrypted, this, &Client::onSocketEncrypted);
+    connect(m_socket, &QSslSocket::sslErrors, this, &Client::onSocketSslErrors);
+    connect(m_socket, &QSslSocket::encryptedBytesWritten, this, &Client::onEncryptedBytesWritten);
+    connect(m_socket, &QSslSocket::modeChanged, this, &Client::onModeChanged);
+    connect(m_socket, &QSslSocket::bytesWritten, this, &Client::onBytesWritten);
+    connect(m_socket, &QSslSocket::readyRead, this, &Client::onReadyRead);
+    connect(m_socket, &QSslSocket::stateChanged, this, &Client::onSocketStateChange);
+    */
     connect(m_socket, SIGNAL(encrypted()), this, SLOT(onSocketEncrypted()));
     connect(m_socket, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(onSocketSslErrors(QList<QSslError>)));
     connect(m_socket, SIGNAL(encryptedBytesWritten(qint64)), this, SLOT(onEncryptedBytesWritten(qint64)));
     connect(m_socket, SIGNAL(modeChanged(QSslSocket::SslMode)), this, SLOT(onModeChanged(QSslSocket::SslMode)));
-
     connect(m_socket, SIGNAL(bytesWritten(qint64)), this, SLOT(onBytesWritten(qint64)));
     connect(m_socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
     connect(m_socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(onSocketStateChange(QAbstractSocket::SocketState)));

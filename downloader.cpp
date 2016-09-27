@@ -44,6 +44,10 @@ Downloader::~Downloader() {
 void Downloader::get() {
     qDebug() << "Level0 [Downloader::get]" << m_id << QUrl(m_path + "/" + m_filename);
     m_reply = m_manager->get(QNetworkRequest(QUrl(m_path + "/" + m_filename)));
+    /*
+    connect(m_reply, &QNetworkAccessManager::finished, this, &Downloader::replyFinished);
+    connect(m_reply, &QNetworkAccessManager::downloadProgress, this, &Downloader::replyProgress);
+    */
     connect(m_reply, SIGNAL(finished()), this, SLOT(replyFinished()));
     connect(m_reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(replyProgress(qint64, qint64)));
 }

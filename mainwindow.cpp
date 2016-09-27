@@ -65,9 +65,8 @@ void MainWindow::init(QString index_file_cmdline) {
     QWebPage *webPage = webView->page();
     webPage->setNetworkAccessManager(m_network_manager);
     webPage->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-    connect(webPage, SIGNAL(linkClicked(QUrl)), this, SLOT(onLinkClicked(QUrl)));
-
-    connect(webPage->mainFrame(), SIGNAL(javaScriptWindowObjectCleared()), this, SLOT(attachJsApi()));
+    connect(webPage, &QWebPage::linkClicked, this, &MainWindow::onLinkClicked);
+    connect(webPage->mainFrame(), &QWebFrame::javaScriptWindowObjectCleared, this, &MainWindow::attachJsApi);
 
     webView->show();
 
@@ -92,16 +91,13 @@ void MainWindow::init(QString index_file_cmdline) {
     connect(optionsDialog, SIGNAL(accepting()), m_jsApi, SLOT(onOptionsDialogAccepted()));
 
     QShortcut *zoomin = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Plus), this);
-    connect( zoomin, SIGNAL(activated()), this, SLOT(onZoomIn()));
+    connect(zoomin, &QShortcut::activated, this, &MainWindow::onZoomIn);
 
     QShortcut *zoomout = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Minus), this);
-    connect( zoomout, SIGNAL(activated()), this, SLOT(onZoomOut()));
-
-    QShortcut *showPrint = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_P), this);
-    connect( showPrint, SIGNAL(activated()), m_jsApi, SLOT(showPrintDialog()));
+    connect(zoomout, &QShortcut::activated, this, &MainWindow::onZoomOut);
 
     QShortcut *shutdown = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q), this);
-    connect( shutdown, SIGNAL(activated()), m_jsApi, SLOT(shutdown()));
+    connect(shutdown, &QShortcut::activated, m_jsApi, &JsApi::shutdown);
 
     QWebSettings::setObjectCacheCapacities(0, 0, 0);
 
@@ -112,15 +108,15 @@ void MainWindow::init(QString index_file_cmdline) {
         inspector = new QWebInspector();
         inspector->setPage(webView->page());
         inspector->setGeometry(QRect(500, 10, 1000, 700));
-        inspector->show();
+        //inspector->show();
     }
 
     QIcon icon = QIcon(application_path + "/popcorn.png");
     m_trayIcon = new QSystemTrayIcon(this);
     m_trayIcon->setIcon(icon);
     m_trayIcon->show();
-    connect(m_trayIcon, SIGNAL(messageClicked()), m_jsApi, SLOT(onTrayMessageClicked()));
-    connect(m_trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), m_jsApi, SLOT(onTrayIconActivated(QSystemTrayIcon::ActivationReason)));
+    connect(m_trayIcon, &QSystemTrayIcon::messageClicked, m_jsApi, &JsApi::onTrayMessageClicked);
+    connect(m_trayIcon, &QSystemTrayIcon::activated, m_jsApi, &JsApi::onTrayIconActivated);
 }
 
 

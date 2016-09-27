@@ -91,7 +91,6 @@ private slots:
     void onReadyRead();
     void onSocketStateChange(QAbstractSocket::SocketState state);
     void onBytesWritten(qint64 size);
-
     void onEncryptedBytesWritten(qint64 size);
     void onSocketSslErrors(QList<QSslError> errors);
     void onSocketEncrypted();

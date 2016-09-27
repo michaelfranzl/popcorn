@@ -34,10 +34,18 @@ ProcessManager::ProcessManager(QObject *parent, QString app, QStringList args, b
     m_timeout = timeout;
 
     m_proc = new QProcess(this);
+    /*
+    connect(m_proc, &QProcess::finished, this, &ProcessManager::onFinished);
+    connect(m_proc, &QProcess::readyReadStandardError, this, &ProcessManager::onReadyReadStandardError);
+    connect(m_proc, &QProcess::readyReadStandardOutput, this, &ProcessManager::onReadyReadStandardOutput);
+    connect(m_proc, &QProcess::error, this, &ProcessManager::onError);
+    */
+
     connect(m_proc, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(onFinished(int,QProcess::ExitStatus)));
     connect(m_proc, SIGNAL(readyReadStandardError()), this, SLOT(onReadyReadStandardError()));
     connect(m_proc, SIGNAL(readyReadStandardOutput()), this, SLOT(onReadyReadStandardOutput()));
     connect(m_proc, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
+
     qDebug() << "Level1 [ProcessManager::initialize ]done";
 }
 
