@@ -34,7 +34,7 @@ class Server : public QTcpServer
 
 public:
     explicit Server(QObject *parent = 0);
-    bool startListen(quint16 port);
+
 
 private:
 
@@ -42,10 +42,11 @@ protected:
     void incomingConnection(qintptr socketDescriptor);
 
 signals:
-    void newSocketDescriptor(qintptr sd);
+    void newSocketDescriptor(int sd);
 
 public slots:
-
+    bool start(quint16 port);
+    void stop();
 };
 
 #endif // SERVER_H

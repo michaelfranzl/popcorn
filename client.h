@@ -47,26 +47,7 @@ class Client : public QObject
 public:
     explicit Client(QObject *parent, QString id, QString location);
 
-    int connectToServer(QString host, qint64 port);
-    void stop();
-    int setMessage(QVariantMap msg);
-    QVariantMap getMessage();
-    qint64 writePlain(QString cmd);
-    qint64 writeBinary(qint64 chunksize);
-    void setBinary(qint64 size);
-    void unsetBinary();
-    void doFlush();
-    QVariantMap setFileMode(QString type, QString fileName, qint64 pos = 0);
-    void unsetFileMode();
-    bool createSocket(bool is_server = false, int sd = 0);
-    QString getPeerAddress();
-    QVariantMap getInfo();
-    int getState();
 
-    void resume();
-    void doIgnoreSslErrors();
-    void startClientEncryption();
-    void startServerEncryption();
 
 
     //variables
@@ -95,11 +76,16 @@ private:
     QString m_fileModeType;
     QFile *m_file;
 
-
-
-    
 signals:
-    void bubbleOut(QString status, QVariantMap option = QVariantMap());
+    void bytesWritten(qint64 size);
+    void readPlain(QString cmd);
+    void readBinaryFeedback(QString cmd);
+    void readBinary(qint64 bytes);
+    void socketStateChange(int state);
+    void encryptedBytesWritten(qint64 size);
+    void modeChanged(int mode);
+    void socketErrors(QVariantMap map);
+    void socketEncrypted();
 
 private slots:
     void onReadyRead();
@@ -112,7 +98,26 @@ private slots:
     void onModeChanged(QSslSocket::SslMode mode);
 
 public slots:
+    int connectToServer(QString host, qint64 port);
+    void stop();
+    int setMessage(QVariantMap msg);
+    QVariantMap getMessage();
+    qint64 writePlain(QString cmd);
+    qint64 writeBinary(qint64 chunksize);
+    void setBinary(qint64 size);
+    void unsetBinary();
+    void doFlush();
+    QVariantMap setFileMode(QString type, QString fileName, qint64 pos = 0);
+    void unsetFileMode();
+    bool createSocket(bool is_server = false, int sd = 0);
+    QString getPeerAddress();
+    QVariantMap getInfo();
+    int getState();
 
+    void resume();
+    void doIgnoreSslErrors();
+    void startClientEncryption();
+    void startServerEncryption();
 
     
 };

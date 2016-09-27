@@ -30,7 +30,7 @@
 Client::Client(QObject *parent, QString id, QString location) :
     QObject(parent)
 {
-    qDebug() << "Level1 [Client::initialize]:" << id << location;
+    qDebug() << "Level0 [Client::initialize]:" << id << location;
     m_id = id;
     m_socket = NULL;
 
@@ -46,6 +46,10 @@ Client::Client(QObject *parent, QString id, QString location) :
 
 
 int Client::connectToServer(QString host, qint64 port) {
+    if (host == "NOMATCH") {
+        qDebug() << "Level1 [Client::connectToServer] NOMATCH";
+        return 0;
+    }
     qDebug() << "Level1 [Client::connectToServer] Connecting to" << host << port;
     m_socket->connectToHost(host, port);
     return m_socket->socketDescriptor();
@@ -77,7 +81,7 @@ int Client::getState() {
 
 
 bool Client::createSocket(bool is_server, int sd) {
-    qDebug() << "Level1 [Client::createSocket] begin" << m_id << is_server << sd;
+    qDebug() << "Level0 [Client::createSocket] begin" << m_id << is_server << sd;
 
     m_socket = new QSslSocket(this);
 
@@ -239,12 +243,8 @@ qint64 Client::writeBinary(qint64 chunksize) {
 
 
 void Client::onBytesWritten(qint64 size) {
-    QVariantMap params;
-    params.insert("id", m_id);
-    params.insert("sd", m_socket->socketDescriptor());
-    params.insert("nbytes_now", size);
     qDebug() << "Level1 [Client::onBytesWritten]" << m_id << "nbytes_now=" << size;
-    emit bubbleOut("clientBytesWritten", params);
+    emit bytesWritten(size);
 }
 
 
@@ -259,11 +259,7 @@ void Client::onReadyRead() {
         QStringList cmds = str.split("\n");
         for (int k = 0; k < cmds.length(); k++) {
             qDebug() << "Level1 [Client::onReadyRead]" << m_id << "<=====" << cmds.at(k);
-            QVariantMap params;
-            params.insert("id", m_id);
-            params.insert("cmd", cmds.at(k));
-            params.insert("sd", m_socket->socketDescriptor());
-            emit bubbleOut("clientReadPlain", params);
+            emit readPlain(cmds.at(k));
         }
 
     } else {
@@ -277,11 +273,7 @@ void Client::onReadyRead() {
                 QStringList cmds = str.split("\n");
                 for (int k = 0; k < cmds.length(); k++) {
                     qDebug() << "Level1 [Client::onReadyRead]" << m_id << "FILE TRANSFER FEEDBACK         <=====" << cmds.at(k);
-                    QVariantMap params;
-                    params.insert("id", m_id);
-                    params.insert("cmd", cmds.at(k));
-                    params.insert("sd", m_socket->socketDescriptor());
-                    emit bubbleOut("clientReadBinaryFeedback", params);
+                    emit readBinaryFeedback(cmds.at(k));
                 }
 
             }
@@ -291,12 +283,7 @@ void Client::onReadyRead() {
         }
 
         qDebug() << "Level1 [Client::onReadyRead]" << m_id << "         <====== now" << ba.length() << "total" << m_readCounter;
-
-        QVariantMap params;
-        params.insert("id", m_id);
-        params.insert("sd", m_socket->socketDescriptor());
-        params.insert("bytes", m_readCounter);
-        emit bubbleOut("clientReadBinary", params);
+        emit readBinary(ba.length());
     }
 }
 
@@ -323,11 +310,7 @@ void Client::unsetBinary() {
 
 void Client::onSocketStateChange(QAbstractSocket::SocketState state) {
     qDebug() << "Level1 [Client::onSocketStateChange]" << m_id << state;
-    QVariantMap params;
-    params.insert("id", m_id);
-    params.insert("state", state);
-    params.insert("sd", m_socket->socketDescriptor());
-    emit bubbleOut("clientSocketStateChange", params);
+    emit socketStateChange((int)state);
 }
 
 
@@ -338,41 +321,28 @@ void Client::resume() {
 }
 
 void Client::onEncryptedBytesWritten(qint64 size) {
-    QVariantMap map;
-    map.insert("id", m_id);
-    map.insert("sd", m_socket->socketDescriptor());
-    map.insert("ebytes_now", size);
-    emit bubbleOut("clientEncryptedBytesWritten", map);
+    emit encryptedBytesWritten(size);
 }
 
 
 void Client::onModeChanged(QSslSocket::SslMode mode) {
     qDebug() << "Level1 [Client::onModeChanged]" << m_id << mode;
-    QVariantMap map;
-    map.insert("id", m_id);
-    map.insert("mode", (int)mode);
-    emit bubbleOut("clientModeChanged", map);
+    emit modeChanged((int)mode);
 }
 
 
 void Client::onSocketSslErrors(QList<QSslError> errors) {
     qDebug() << "Level1 [Client::onSocketSslErrors]" << m_id << errors;
     QVariantMap map;
-    map.insert("id", m_id);
     for (int i = 0; i < errors.length(); i++) {
         map.insert(QString::number(i), errors.at(i).errorString());
     }
-    emit bubbleOut("clientSocketErrors", map);
+    emit socketErrors(map);
 }
 
 void Client::onSocketEncrypted() {
     qDebug() << "Level1 [Client::onSocketEncrypted]" << m_id;
-
-    QVariantMap params;
-    params.insert("id", m_id);
-    params.insert("sd", m_socket->socketDescriptor());
-
-    emit bubbleOut("clientSocketEncrypted", params);
+    emit socketEncrypted();
 }
 
 void Client::doIgnoreSslErrors() {

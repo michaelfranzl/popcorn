@@ -34,7 +34,6 @@ JsApi::JsApi(MainWindow *parent) :
 {
     m_mainWindow = parent;
 
-    m_clients = QMap<QString, Client*>();
     m_bubbleParams = QMap<QString, QVariantMap>();
     m_bubbleParamID = 0;
     m_lastLocalClientID = 0;
@@ -59,6 +58,7 @@ void JsApi::onUdpDatagramReceived() {
     qDebug() << "Level3 [JsApi::onUdpDatagramReceived] called";
     m_lastUdpMessage->resize(m_udpServer->pendingDatagramSize());
     m_udpServer->readDatagram(m_lastUdpMessage->data(), m_lastUdpMessage->size(), m_lastUdpIp);
+    qDebug() << "Level0 [JsApi::onUdpDatagramReceived] called" << m_lastUdpMessage->size();
     bubbleUp("udpDatagramReceived");
 }
 
@@ -79,24 +79,18 @@ int JsApi::getQtVersion() {
     return QT_VERSION;
 }
 
-bool JsApi::startUdpServer(quint16 port) {
-    if (m_server_udp_started)
-        return true;
-
+bool JsApi::createUdpServer(qint16 port) {
+    if (m_server_udp_started) return true;
     m_udpServer = new QUdpSocket(this);
     m_server_udp_started = m_udpServer->bind(port, QUdpSocket::DontShareAddress);
     connect(m_udpServer, SIGNAL(readyRead()), this, SLOT(onUdpDatagramReceived()));
     return m_server_udp_started;
 }
 
-bool JsApi::startTcpServer(quint16 port) {
-    if (m_server_tcp_started)
-        return true;
-
-    m_server = new Server(this);
-    connect(m_server, SIGNAL(newSocketDescriptor(qintptr)), this, SLOT(onNewSocketDescriptor(qintptr)));
-    m_server_tcp_started = m_server->startListen(port);
-    return m_server_tcp_started;
+QObject * JsApi::createTcpServer(QString label) {
+    Server * tcps = new Server(this);
+    m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, tcps, QWebFrame::AutoOwnership);
+    return tcps;
 }
 
 QString JsApi::getRandomBytes(int len) {
@@ -416,148 +410,13 @@ QVariantMap JsApi::getUdpMessage() {
     return m->toMap();
 }
 
-void JsApi::onNewSocketDescriptor(qintptr sd) {
-    qDebug() << "Level1 [JsApi::onNewSocketDescriptor]" << sd;
-    // incoming local clients are enumerated into the negative
-    m_lastLocalClientID--;
-
-    Client * c = new Client(this, QString::number(m_lastLocalClientID), "lan");
-    m_clients.insert(QString::number(m_lastLocalClientID), c);
-    connect(c, SIGNAL(bubbleOut(QString,QVariantMap)), this, SLOT(bubbleUp(QString,QVariantMap)));
-    c->createSocket(true, sd);
-
-    QVariantMap params;
-    params.insert("id", m_lastLocalClientID);
-    bubbleUp("incomingLocalClient", params);
-}
-
 void JsApi::debug(QString str) {
     qDebug() << str;
 }
 
-QVariant JsApi::clientAction(QString action, QVariantMap options) {
-    qDebug() << "Level4 [JsApi::clientAction]:" << action << options;
-    if (action == "create") {
-        QString id = options.value("id").toString();
-        QString location = options.value("location").toString();
-
-        Client * c = new Client (this, id, location);
-        m_clients.insert(id, c);
-        c->createSocket();
-        connect(c, SIGNAL(bubbleOut(QString,QVariantMap)), this, SLOT(bubbleUp(QString,QVariantMap)));
-        return c->m_id;
-
-    } else if (action == "getAllIDs") {
-        QStringList keys;
-        keys = m_clients.keys();
-        return keys;
-
-    } else {
-        // get the client
-        QString id = options.value("id").toString();
-        Client * c;
-        if (m_clients.keys().contains(id)) {
-            c = m_clients.value(id);
-        } else {
-            QVariantMap opt;
-            opt.insert("id", id);
-            opt.insert("action", action);
-            opt.insert("options", options);
-            bubbleUp("noSuchClient", opt);
-            return "noSuchClient";
-        }
-
-        // now that we have the client, do stuff
-        if (action == "connectToServer") {
-            QString host = options.value("host").toString();
-            qint64 port = options.value("port").toLongLong();
-            return c->connectToServer(host, port);
-
-        } else if (action == "stop") {
-            c->stop();
-            return "OK";
-
-        } else if (action == "remove") {
-            int removed_count = m_clients.remove(id);
-            c->deleteLater();
-            return removed_count;
-
-        } else if (action == "writePlain") {
-            QString text = options.value("text").toString() + "\n";
-            return c->writePlain(text);
-
-        } else if (action == "flush") {
-            c->doFlush();
-
-        } else if (action == "setContent") {
-            int size = 0;
-            QString contentType = options.value("content_type").toString();
-            if (contentType == "message") {
-                QVariantMap msg = options.value("content").toMap();
-                size = c->setMessage(msg);
-            } else if (contentType == "file" ) {
-                QString filepath = options.value("content").toString();
-                size = fileSize(filepath);
-            }
-            return size;
-
-        } else if (action == "setFileMode") {
-            QString filepath = options.value("path").toString();
-            QString type = options.value("file_mode_type").toString();
-            qint64 pos = options.value("pos").toInt();
-            return c->setFileMode(type, filepath, pos);
-
-        } else if (action == "unsetFileMode") {
-            c->unsetFileMode();
-            return "OK";
-
-        } else if (action == "setBinary") {
-            qint64 size = options.value("size").toLongLong();
-            c->setBinary(size);
-            return "OK";
-
-        } else if (action == "unsetBinary") {
-            c->unsetBinary();
-            return "OK";
-
-        } else if (action == "writeBinary") {
-            qint64 bytes = options.value("bytes").toLongLong();
-            return c->writeBinary(bytes);
-
-        } else if (action == "getMessage") {
-            qDebug() << "Level1 [JsApi::clientAction]: getMessage";
-            QVariantMap obj = c->getMessage();
-            return obj;
-
-        } else if (action == "getPeerAddress") {
-            return c->getPeerAddress();
-
-        } else if (action == "getInfo") {
-            return c->getInfo();
-
-        } else if (action == "startClientEncryption") {
-            c->startClientEncryption();
-            return "OK";
-
-        } else if (action == "startServerEncryption") {
-            c->startServerEncryption();
-            return "OK";
-
-        } else if (action == "doIgnoreSslErrors") {
-            c->doIgnoreSslErrors();
-            return "OK";
-
-        } else if (action == "resume") {
-            c->resume();
-            return "OK";
-
-        } else if (action == "getState") {
-            return c->getState();
-
-        }
-    }
-
-    return "unknown action " + action;
+QObject * JsApi::createClient(QString id, QString location) {
+    Client * c = new Client(this, id, location);
+    return c;
 }
 
 void JsApi::playSound(QString name) {

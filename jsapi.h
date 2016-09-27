@@ -121,7 +121,6 @@ signals:
 private slots:
     void onUdpDatagramReceived();
     void bubbleUp(QString label, QVariantMap option = QVariantMap());
-    void onNewSocketDescriptor(qintptr sd);
     
 public slots:
     // public slot methods are exposed to JavaScript
@@ -153,7 +152,7 @@ public slots:
     QString getSystemUserName();
     QString getSystemComputerName();
     QStringList getMyLocalIpAddresses();
-    QVariant clientAction(QString action, QVariantMap options = QVariantMap());
+
     QString getHash(QString string, int type = 1); // MD5 default
     QString getHashFromHexStr(QString string_hex, int type = 1);
     qint64 sendUdpMessage(QVariantMap msg, QString host, qint64 port);
@@ -186,13 +185,15 @@ public slots:
     void windowShowNormal();
     int getQtVersion();
     QString getRandomBytes(int len);
-    bool startUdpServer(quint16 port);
-    bool startTcpServer(quint16 port);
+
     QStringList getCmdlineArgs();
 
-    //void downloadFile(QString id, QString path, QString filename = "");
     QObject * createDatabase(QString label);
     QObject * createDownloader(QString label, QString path, QString filename);
+    QObject * createClient(QString id, QString location);
+
+    bool createUdpServer(qint16 port);
+    QObject * createTcpServer(QString label);
 
     // regular slots
     void onOptionsDialogAccepted();
