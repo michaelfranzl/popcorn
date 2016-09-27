@@ -40,7 +40,8 @@ class Database : public QObject
 {
     Q_OBJECT
 public:
-    explicit Database(QObject *parent = 0);
+    explicit Database(QString label, QObject *parent = 0);
+    ~Database();
 
 protected:
 
@@ -48,12 +49,14 @@ private:
     QSqlDatabase m_db;
     QSqlQuery m_query;
     bool m_is_setup;
+    QString m_label;
     // methods
 
 signals:
 
 public slots:
     QVariantMap open();
+    void close();
     QVariantMap run(QString querystring);
     bool isOpen();
     bool hasFeature(int feature);

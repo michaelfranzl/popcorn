@@ -41,6 +41,7 @@
 #include "server.h"
 #include "process_manager.h"
 #include "downloader.h"
+#include "database.h"
 
 #ifdef Q_OS_WIN
     #include <windows.h>
@@ -173,7 +174,7 @@ public slots:
     double getMemUsage();
     bool getMinimizedStatus();
     void clearMemoryCaches();
-    QString printDebug(QByteArray input);
+    void printDebug(QByteArray input);
     void debug(QString str);
     QVariantMap getOsInfo();
     void windowSetFlags(int flgs);
@@ -189,6 +190,8 @@ public slots:
     bool startUdpServer(quint16 port);
     bool startTcpServer(quint16 port);
     QStringList getCmdlineArgs();
+
+    QObject * createDatabase(QString label);
 
     // regular slots
     void onOptionsDialogAccepted();

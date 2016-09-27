@@ -32,11 +32,18 @@
 #include <QSettings>
 #include "math.h"
 
-Database::Database(QObject *parent) :
+Database::Database(QString label, QObject *parent) :
     QObject(parent)
 {
     qDebug() << "Level0 [Database::Database] initialized";
     m_is_setup = false;
+    m_label = label;
+}
+
+Database::~Database() {
+    qDebug() << "Level0 [Database::~Database] Called";
+    close();
+    qDebug() << "Level0 [Database::~Database] Done";
 }
 
 void Database::setup(QString dbpath) {
@@ -54,6 +61,11 @@ void Database::setup(QString dbpath) {
     m_query.setForwardOnly(true);
 
     m_is_setup = true;
+}
+
+
+void Database::close() {
+    m_db.close();
 }
 
 QVariantMap Database::open() {

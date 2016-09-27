@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() {
-    qDebug() << "Level1 [MainWindow::~MainWindow] Called";
+    qDebug() << "Level0 [MainWindow::~MainWindow] Called";
     if (windowState().testFlag(Qt::WindowMinimized) == true) {
         settings->setValue("minified_state", "true");
     } else {
@@ -39,7 +39,7 @@ MainWindow::~MainWindow() {
     settings->setValue("exit", "true");
     settings->sync();
 
-    qDebug() << "Level1 [MainWindow::~MainWindow] Done";
+    qDebug() << "Level0 [MainWindow::~MainWindow] Done";
 }
 
 void MainWindow::init(QString index_file_cmdline) {
@@ -86,8 +86,6 @@ void MainWindow::init(QString index_file_cmdline) {
     if ( z ) webView->page()->mainFrame()->setZoomFactor(z);
 
     m_jsApi = new JsApi(this);
-    m_db = new Database(this);
-
 
     optionsDialog = new OptionsDialog(this);
     optionsDialog->m_version = m_version;
@@ -151,7 +149,6 @@ void MainWindow::bootstrap(QString index_file_cmdline) {
 void MainWindow::attachJsApi() {
     qDebug() << "Level1 [MainWindow::attachJsApi] Exposing the jsApi class to Javascript.";
     webView->page()->mainFrame()->addToJavaScriptWindowObject("API", m_jsApi);
-    webView->page()->mainFrame()->addToJavaScriptWindowObject("DB", m_db);
 }
 
 void MainWindow::onLinkClicked(QUrl url) {

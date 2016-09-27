@@ -99,6 +99,12 @@ bool JsApi::startTcpServer(quint16 port) {
     return m_server_tcp_started;
 }
 
+QObject * JsApi::createDatabase(QString label) {
+    Database *db = new Database(label, this);
+    m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, db, QWebFrame::AutoOwnership);
+    return db;
+}
+
 QString JsApi::getRandomBytes(int len) {
     QByteArray buf = QByteArray();
     buf.resize(len);
@@ -334,10 +340,8 @@ QVariantMap JsApi::getBubbleParams(int id) {
     return options;
 }
 
-QString JsApi::printDebug(QByteArray input) {
+void JsApi::printDebug(QByteArray input) {
     printf("PRINT DEBUG %s", input.data());
-    return input.toHex();
-    return input;
 }
 
 
@@ -431,7 +435,7 @@ QVariantMap JsApi::getUdpMessage() {
     QVariantMap map = QVariantMap();
     m->deleteLater();
     qDebug() << "Level3 [JsApi::getUdpMessage] Returning" << m->toMap();
-    return m->toMap();;
+    return m->toMap();
 }
 
 void JsApi::onNewSocketDescriptor(qintptr sd) {
