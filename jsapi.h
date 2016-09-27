@@ -167,7 +167,6 @@ public slots:
 #ifdef Q_OS_WIN
     void JsApi::runUpgrader(QString id, QString source_dir, QString dest_dir, bool detach = true);
 #endif
-    void downloadFile(QString id, QString path, QString filename = "");
     QString getVersion();
     void shutdown();
     void restart();
@@ -191,7 +190,9 @@ public slots:
     bool startTcpServer(quint16 port);
     QStringList getCmdlineArgs();
 
+    //void downloadFile(QString id, QString path, QString filename = "");
     QObject * createDatabase(QString label);
+    QObject * createDownloader(QString label, QString path, QString filename);
 
     // regular slots
     void onOptionsDialogAccepted();
@@ -199,9 +200,14 @@ public slots:
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason);
     void onProcessFinished(QString id, QVariantMap contents);
     void onProcessError(QString id, QProcess::ProcessError err);
+
+
+
+    /*
     void onFileDownloaded(QString id);
     void onFileDownloadError(QString id, QString errormsg);
     void onFileDownloadProgress(QString id, qint64 bytesReceived, qint64 bytesTotal);
+    */
 };
 
 #endif // JSAPI_H

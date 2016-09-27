@@ -25,11 +25,20 @@
 Downloader::Downloader(QObject *parent, QNetworkAccessManager * manager, QString id, QString path, QString filename) :
     QObject(parent)
 {
-    qDebug() << "Level3 [Downloader::initialize]" << id << path << filename;
+    qDebug() << "Level0 [Downloader::initialize]" << id << path << filename;
     m_manager = manager;
     m_id = id;
     m_path = path;
     m_filename = filename;
+    m_reply = 0;
+}
+
+Downloader::~Downloader() {
+    qDebug() << "Level0 [Downloader::~Downloader] Called" << m_id;
+    abort();
+    m_reply->deleteLater();
+    this->deleteLater();
+    qDebug() << "Level0 [Downloader::~Downloader] Done" << m_id;
 }
 
 void Downloader::get() {
@@ -39,34 +48,36 @@ void Downloader::get() {
     connect(m_reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(replyProgress(qint64, qint64)));
 }
 
+void Downloader::abort() {
+    qDebug() << "Level0 [Downloader::abort]" << m_id << m_reply;
+    if (m_reply) m_reply->abort();
+}
 
 void Downloader::replyProgress(qint64 bytesReceived, qint64 bytesTotal) {
     qDebug() << "Level3 [Downloader::replyProgress]:"<< m_id << bytesReceived << bytesTotal;
-    emit progress(m_id, bytesReceived, bytesTotal);
+    emit progress(bytesReceived, bytesTotal);
 }
 
 void Downloader::replyFinished() {
     if( m_reply->error() ) {
-        qDebug() << "Level1 [Downloader::replyFinished] Error:"<< m_id << m_reply->errorString();
-        emit error(m_id, m_reply->errorString());
+        qDebug() << "Level0 [Downloader::replyFinished] Error:"<< m_id << m_reply->errorString();
+        emit error(m_reply->errorString());
 
     } else {
         QDir().mkpath(jail_working_path + "/downloads");
-        QFile *file = new QFile(jail_working_path + "/downloads/" + m_filename);
-        if(file->open(QFile::WriteOnly)) {
+        m_file = new QFile(jail_working_path + "/downloads/" + m_filename, this);
+        if(m_file->open(QFile::WriteOnly)) {
             QByteArray data = m_reply->readAll();
             if (data.length() == 0) {
-                emit error(m_id, "readZeroBytes");
+                emit error("readZeroBytes");
             }
-            file->write(data);
-            file->close();
+            m_file->write(data);
+            m_file->close();
         } else {
-            emit error(m_id, "couldNotOpenFile");
-            qDebug() << "Level1 [Downloader::replyFinished] Error: could not open file" << jail_working_path + "/" + m_filename;
+            emit error("couldNotOpenFile");
+            qDebug() << "Level0 [Downloader::replyFinished] Error: could not open file" << jail_working_path + "/" + m_filename;
         }
-        file->deleteLater();
-        emit saved(m_id);
+        emit saved(m_filename);
+        m_file->deleteLater();
     }
-    m_reply->deleteLater();
-    this->deleteLater();
 }

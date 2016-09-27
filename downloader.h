@@ -37,20 +37,25 @@ class Downloader : public QObject
     Q_OBJECT
 public:
     explicit Downloader(QObject *parent = 0, QNetworkAccessManager *manager = 0, QString id = "", QString path = "", QString filename = "");
-
-    void get();
+    ~Downloader();
 
 private:
     QString m_id;
     QString m_path;
     QString m_filename;
+    QFile * m_file;
     QNetworkReply * m_reply;
     QNetworkAccessManager * m_manager;
 
 signals:
-    void saved(QString id);
-    void progress(QString id, qint64 bytesReceived, qint64 bytesTotal);
-    void error(QString id, QString errormsg);
+    void saved(QString filename);
+    void progress(qint64 bytesReceived, qint64 bytesTotal);
+    void error(QString errormsg);
+
+
+public slots:
+    void get();
+    void abort();
 
 private slots:
     void replyFinished();

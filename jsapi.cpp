@@ -99,12 +99,6 @@ bool JsApi::startTcpServer(quint16 port) {
     return m_server_tcp_started;
 }
 
-QObject * JsApi::createDatabase(QString label) {
-    Database *db = new Database(label, this);
-    m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, db, QWebFrame::AutoOwnership);
-    return db;
-}
-
 QString JsApi::getRandomBytes(int len) {
     QByteArray buf = QByteArray();
     buf.resize(len);
@@ -182,6 +176,19 @@ void JsApi::shutdown() {
     qApp->exit(0);
 }
 
+QObject * JsApi::createDatabase(QString label) {
+    Database *db = new Database(label, this);
+    m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, db, QWebFrame::AutoOwnership);
+    return db;
+}
+
+QObject * JsApi::createDownloader(QString label, QString path, QString filename) {
+    Downloader *dl = new Downloader(this, m_mainWindow->m_network_manager, label, path, filename);
+    m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, dl, QWebFrame::AutoOwnership);
+    return dl;
+}
+
+/*
 void JsApi::downloadFile(QString id, QString path, QString filename) {
     qDebug() << "Level3 [JsApi::downloadFile]" << id << path << filename;
     Downloader *downloader = new Downloader(this, m_mainWindow->m_network_manager, id, path, filename);
@@ -208,6 +215,7 @@ void JsApi::onFileDownloadError(QString id, QString errormsg) {
 void JsApi::onFileDownloaded(QString id) {
     bubbleUp("downloadFileFinished" + id);
 }
+*/
 
 
 QString JsApi::runUnzip(QString id, QString zip_filepath_rel, QString extract_dir_rel, bool detach) {
