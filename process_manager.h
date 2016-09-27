@@ -33,11 +33,11 @@ class ProcessManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit ProcessManager(QObject *parent = 0, QString id = "", QString app = "", QStringList args = QStringList(), bool detach = false, QString working_dir = QDir::rootPath(), qint64 timeout = 10000);
+    explicit ProcessManager(QObject *parent = 0, QString app = "", QStringList args = QStringList(), bool detach = false, QString working_dir = QDir::rootPath(), qint64 timeout = 10000);
 
-    void run();
 
-    QString m_id;
+private:
+    QProcess * m_proc;
     QString m_app;
     QStringList m_args;
     bool m_detach;
@@ -45,25 +45,19 @@ public:
     qint64 m_timeout;
     QString m_buffer_stdout;
     QString m_buffer_stderr;
-
-
-private:
-    QProcess * m_proc;
-    qint64 m_pid;
-    QString m_name;
     
 signals:
-    void processFinished(QString,QVariantMap);
-    void processError(QString,QProcess::ProcessError);
+    void started();
+    void finished(QVariantMap info);
+    void error(QProcess::ProcessError err);
     
 public slots:
+    void run();
+
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void error ( QProcess::ProcessError error );
-    void readyReadStandardError ();
-    void readyReadStandardOutput ();
-    void started ();
-    //void stateChanged ( QProcess::ProcessState newState );
-    
+    void onError (QProcess::ProcessError err);
+    void onReadyReadStandardError ();
+    void onReadyReadStandardOutput ();
 };
 
 #endif // PROCESS_MANAGER_H

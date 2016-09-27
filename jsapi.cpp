@@ -36,12 +36,8 @@ JsApi::JsApi(MainWindow *parent) :
 
     m_bubbleParams = QMap<QString, QVariantMap>();
     m_bubbleParamID = 0;
-    m_lastLocalClientID = 0;
-    m_lastUdpMessage = new QByteArray();
-    m_lastUdpIp = new QHostAddress();
 
     m_server_udp_started = false;
-    m_server_tcp_started = false;
 
 #ifdef Q_OS_MAC
     QShortcut *showOptionsShortcut = new QShortcut(QKeySequence(Qt::ControlModifier + Qt::Key_O), m_mainWindow);
@@ -55,22 +51,13 @@ JsApi::JsApi(MainWindow *parent) :
 // ================== private =======================
 
 void JsApi::onUdpDatagramReceived() {
-    qDebug() << "Level3 [JsApi::onUdpDatagramReceived] called";
-    m_lastUdpMessage->resize(m_udpServer->pendingDatagramSize());
-    m_udpServer->readDatagram(m_lastUdpMessage->data(), m_lastUdpMessage->size(), m_lastUdpIp);
-    qDebug() << "Level0 [JsApi::onUdpDatagramReceived] called" << m_lastUdpMessage->size();
-    bubbleUp("udpDatagramReceived");
-}
+    QByteArray msg;
+    QHostAddress ip;
+    msg.resize(m_udpServer->pendingDatagramSize());
+    m_udpServer->readDatagram(msg.data(), msg.size(), &ip);
 
-void JsApi::bubbleUp(QString label, QVariantMap options) {
-    m_bubbleParamID++;
-    QString id = QString::number(m_bubbleParamID);
-    m_bubbleParams.insert(id, options);
-
-    QString js = "adapter.receiveEvent('" + label + "'," + id + ");";
-
-    qDebug() << "Level3 [JsApi::bubbleUp]:" << options.value("sd").toString() << label << options;
-    m_mainWindow->webView->page()->mainFrame()->evaluateJavaScript(js);
+    Message m(this, msg);
+    emit udpDatagramReceived(m.toMap(), ip.toString());
 }
 
 // ================== public =======================
@@ -87,9 +74,8 @@ bool JsApi::createUdpServer(qint16 port) {
     return m_server_udp_started;
 }
 
-QObject * JsApi::createTcpServer(QString label) {
+QObject * JsApi::createTcpServer() {
     Server * tcps = new Server(this);
-    m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, tcps, QWebFrame::AutoOwnership);
     return tcps;
 }
 
@@ -151,7 +137,6 @@ void JsApi::restart() {
     settings->sync();
 
     m_udpServer->close();
-    m_server->close();
 
     QProcess proc;
     QStringList used_args = QApplication::arguments();
@@ -170,35 +155,28 @@ void JsApi::shutdown() {
     qApp->exit(0);
 }
 
-QObject * JsApi::createDatabase(QString label) {
+QObject *JsApi::createDatabase(QString label) {
     Database *db = new Database(label, this);
     m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, db, QWebFrame::AutoOwnership);
     return db;
 }
 
-QObject * JsApi::createDownloader(QString label, QString path, QString filename) {
+QObject *JsApi::createDownloader(QString label, QString path, QString filename) {
     Downloader *dl = new Downloader(this, m_mainWindow->m_network_manager, label, path, filename);
-    m_mainWindow->webView->page()->mainFrame()->addToJavaScriptWindowObject(label, dl, QWebFrame::AutoOwnership);
     return dl;
 }
 
-QString JsApi::runUnzip(QString id, QString zip_filepath_rel, QString extract_dir_rel, bool detach) {
-    qDebug() << "Level1 [JsApi::runUnzip]" << id << zip_filepath_rel << extract_dir_rel << detach;
+QObject *JsApi::runUnzip(QString zip_filepath_rel, QString extract_dir_rel, bool detach) {
+    qDebug() << "Level1 [JsApi::runUnzip]" << zip_filepath_rel << extract_dir_rel << detach;
 
 #ifdef Q_OS_WIN
     QString unzip_binary_name = application_path + "/unzip.exe";
-    if (!QFile(unzip_binary_name).exists()) {
-        qDebug() << "Level0 [JsApi::runUnzip] unzip.exe must be in application directory";
-        return "unzipExeNotFound";
-    }
+    if (!QFile(unzip_binary_name).exists()) return "unzipExeNotFound";
 #else
     QString unzip_binary_name = "unzip";
 #endif
 
-    if (extract_dir_rel.contains("..")) {
-        qDebug() << "Level0 [JsApi::runUnzip] extract_dir_rel cannot contain '..'";
-        return "pathContainsDotDot";
-    }
+    if (extract_dir_rel.contains("..")) return (QObject *)NULL;
 
     QString zip_filepath_abs = jail_working_path + "/" + zip_filepath_rel;
     QString destdir_abs = jail_working_path + "/" + extract_dir_rel;
@@ -209,11 +187,8 @@ QString JsApi::runUnzip(QString id, QString zip_filepath_rel, QString extract_di
     args.append("-d"); // extractdir
     args.append(destdir_abs);
 
-    ProcessManager * p = new ProcessManager(this, id, unzip_binary_name, args, detach);
-    connect(p, SIGNAL(processFinished(QString,QVariantMap)), this, SLOT(onProcessFinished(QString,QVariantMap)));
-    connect(p, SIGNAL(processError(QString,QProcess::ProcessError)), this, SLOT(onProcessError(QString,QProcess::ProcessError)));
-    p->run(); // will delete itself when finished
-    return "OK";
+    ProcessManager * p = new ProcessManager(this, unzip_binary_name, args, detach);
+    return p;
 }
 
 #ifdef Q_OS_WIN
@@ -224,29 +199,10 @@ void JsApi::runUpgrader(QString id, bool detach) {
     args.append(jail_working_path + "/newbinary");
     args.append(application_path);
 
-    ProcessManager * p = new ProcessManager(this, id, jail_working + "/upgrader/upgrader.exe", args, detach);
-
-    connect(p, SIGNAL(processFinished(QString,QVariantMap)), this, SLOT(onProcessFinished(QString,QVariantMap)));
-    connect(p, SIGNAL(processError(QString,QProcess::ProcessError)), this, SLOT(onProcessError(QString,QProcess::ProcessError)));
-    p->run();
+    ProcessManager * p = new ProcessManager(this, jail_working + "/upgrader/upgrader.exe", args, detach);
+    return p;
 }
 #endif
-
-void JsApi::onProcessFinished(QString id, QVariantMap contents) {
-    qDebug() << "Level0 [JsApi::onProcessFinished]" << id << contents;
-    QVariantMap params;
-    params.insert("process_id", id);
-    params.insert("contents", contents);
-    bubbleUp("onProcessFinished" + id, params);
-}
-
-void JsApi::onProcessError(QString id, QProcess::ProcessError err) {
-    qDebug() << "Level0 [JsApi::onProcessError]" << id << err;
-    QVariantMap params;
-    params.insert("process_id", id);
-    params.insert("error", (int)err);
-    bubbleUp("onProcessError" + id, params);
-}
 
 void JsApi::showOptionsDialog() {
     m_mainWindow->optionsDialog->loadSettings();
@@ -254,18 +210,16 @@ void JsApi::showOptionsDialog() {
 }
 
 void JsApi::onOptionsDialogAccepted() {
-    bubbleUp("onOptionsDialogAccepted");
+    emit optionsDialogAccepted();
 }
 
 void JsApi::onTrayMessageClicked() {
-    bubbleUp("onTrayMessageClicked");
+    emit trayMessageClicked();
 }
 
 void JsApi::onTrayIconActivated(QSystemTrayIcon::ActivationReason reason) {
     qDebug() << "Level1 [JsApi::onTrayIconActivated]" << reason;
-    QVariantMap params;
-    params.insert("reason", reason);
-    bubbleUp("onTrayIconActivated", params);
+    emit trayIconActivated(reason);
 }
 
 void JsApi::showTrayMessage(QString title, QString msg, int type, int delay) {
@@ -303,13 +257,6 @@ void JsApi::setConfiguration(QString key, QVariant val) {
             )
         return;
     settings->setValue(key, val);
-}
-
-QVariantMap JsApi::getBubbleParams(int id) {
-    QVariantMap options;
-    options = m_bubbleParams.value(QString::number(id));
-    m_bubbleParams.remove(QString::number(id));
-    return options;
 }
 
 void JsApi::printDebug(QByteArray input) {
@@ -401,15 +348,6 @@ qint64 JsApi::sendUdpMessage(QVariantMap msg, QString host, qint64 port) {
     return bytes_sent;
 }
 
-QVariantMap JsApi::getUdpMessage() {
-    Message * m = new Message(this, *m_lastUdpMessage);
-
-    QVariantMap map = QVariantMap();
-    m->deleteLater();
-    qDebug() << "Level3 [JsApi::getUdpMessage] Returning" << m->toMap();
-    return m->toMap();
-}
-
 void JsApi::debug(QString str) {
     qDebug() << str;
 }
@@ -424,7 +362,7 @@ void JsApi::playSound(QString name) {
 #ifdef Q_OS_LINUX
     QStringList args;
     args.append(name);
-    ProcessManager *p = new ProcessManager(this, "audio", "aplay", args);
+    ProcessManager *p = new ProcessManager(this, "aplay", args);
     p->run();
 #else
     QSound::play(name);

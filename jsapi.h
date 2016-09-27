@@ -99,35 +99,39 @@ public:
 private:
     // variables
     QUdpSocket *m_udpServer;
-    Server *m_server;
-    QMap<QString, Client*> m_clients;
     QMap<QString, QVariantMap> m_bubbleParams;
     qint64 m_bubbleParamID;
-    qint64 m_lastLocalClientID;
-    QByteArray *m_lastUdpMessage;
-    QHostAddress *m_lastUdpIp;
 
     QCryptographicHash *m_fileHashCrypto;
     QFile *m_fileHashFile;
 
     bool m_server_udp_started;
-    bool m_server_tcp_started;
 
     // methods
 
     
 signals:
+    void udpDatagramReceived(QVariantMap msg, QString ip);
+    void optionsDialogAccepted();
+    void trayMessageClicked();
+    void trayIconActivated(int reason);
 
 private slots:
     void onUdpDatagramReceived();
-    void bubbleUp(QString label, QVariantMap option = QVariantMap());
     
 public slots:
     // public slot methods are exposed to JavaScript
     void setConfiguration(QString key, QVariant val);
     QVariant getConfiguration(QString key);
     void clearConfiguration(QString key);
-    QVariantMap getBubbleParams(int id);
+
+    QObject * createDatabase(QString label);
+    QObject * createDownloader(QString label, QString path, QString filename);
+    QObject * createClient(QString id, QString location);
+
+    bool createUdpServer(qint16 port);
+    QObject * createTcpServer();
+
     void windowMinimize();
 
     // directory operations
@@ -156,15 +160,14 @@ public slots:
     QString getHash(QString string, int type = 1); // MD5 default
     QString getHashFromHexStr(QString string_hex, int type = 1);
     qint64 sendUdpMessage(QVariantMap msg, QString host, qint64 port);
-    QVariantMap getUdpMessage();
     void showTrayMessage(QString title, QString msg, int type = 0, int delay = 1000);
     void setTrayToolTip(QString tip);
     void playSound(QString name);
     QVariantMap getStaticPaths();
     void showOptionsDialog();
-    QString runUnzip(QString id, QString zip_filepath_rel, QString extract_dir_rel, bool detach = false);
+    QObject *runUnzip(QString zip_filepath_rel, QString extract_dir_rel, bool detach = false);
 #ifdef Q_OS_WIN
-    void JsApi::runUpgrader(QString id, QString source_dir, QString dest_dir, bool detach = true);
+    void JsApi::runUpgrader(QString source_dir, QString dest_dir, bool detach = true);
 #endif
     QString getVersion();
     void shutdown();
@@ -188,19 +191,10 @@ public slots:
 
     QStringList getCmdlineArgs();
 
-    QObject * createDatabase(QString label);
-    QObject * createDownloader(QString label, QString path, QString filename);
-    QObject * createClient(QString id, QString location);
-
-    bool createUdpServer(qint16 port);
-    QObject * createTcpServer(QString label);
-
     // regular slots
     void onOptionsDialogAccepted();
     void onTrayMessageClicked();
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason);
-    void onProcessFinished(QString id, QVariantMap contents);
-    void onProcessError(QString id, QProcess::ProcessError err);
 };
 
 #endif // JSAPI_H

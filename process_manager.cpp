@@ -22,12 +22,11 @@
 
 #include "process_manager.h"
 
-ProcessManager::ProcessManager(QObject *parent, QString id, QString app, QStringList args, bool detach, QString working_dir, qint64 timeout) :
+ProcessManager::ProcessManager(QObject *parent, QString app, QStringList args, bool detach, QString working_dir, qint64 timeout) :
     QObject(parent)
 {
-    qDebug() << "Level1 [ProcessManager::initialize]" << id << app << args << detach << working_dir << timeout;
+    qDebug() << "Level1 [ProcessManager::initialize]" << app << args << detach << working_dir << timeout;
 
-    m_id = id;
     m_app = app;
     m_args = args;
     m_detach = detach;
@@ -36,15 +35,10 @@ ProcessManager::ProcessManager(QObject *parent, QString id, QString app, QString
 
     m_proc = new QProcess(this);
     connect(m_proc, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(onFinished(int,QProcess::ExitStatus)));
-    connect(m_proc, SIGNAL(started()), this, SLOT(started()));
-    connect(m_proc, SIGNAL(readyReadStandardError()), this, SLOT(readyReadStandardError()));
-    connect(m_proc, SIGNAL(readyReadStandardOutput()), this, SLOT(readyReadStandardOutput()));
-    connect(m_proc, SIGNAL(error(QProcess::ProcessError)), this, SLOT(error(QProcess::ProcessError)));
+    connect(m_proc, SIGNAL(readyReadStandardError()), this, SLOT(onReadyReadStandardError()));
+    connect(m_proc, SIGNAL(readyReadStandardOutput()), this, SLOT(onReadyReadStandardOutput()));
+    connect(m_proc, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
     qDebug() << "Level1 [ProcessManager::initialize ]done";
-}
-
-void ProcessManager::started() {
-    qDebug() << "Level1 [ProcessManager::started]";
 }
 
 void ProcessManager::run() {
@@ -57,29 +51,28 @@ void ProcessManager::run() {
 }
 
 void ProcessManager::onFinished(int exitCode, QProcess::ExitStatus exitStatus) {
-    qDebug() << "Level0 [ProcessManager::onFinished]" << m_id << exitCode << exitStatus;
+    qDebug() << "Level0 [ProcessManager::onFinished]" << exitCode << exitStatus;
     QVariantMap std_in_out;
     std_in_out.insert("stdout", m_buffer_stdout);
     std_in_out.insert("stderr", m_buffer_stderr);
-    emit processFinished(m_id, std_in_out);
+    emit finished(std_in_out);
     m_proc->deleteLater();
-    this->deleteLater();
     qDebug() << "Level1 [ProcessManager::onFinished] cleaned up";
 }
 
-void ProcessManager::error ( QProcess::ProcessError error ) {
-    qDebug() << "Level0 [ProcessManager::error]" << m_id << error;
-    emit processError(m_id, error);
+void ProcessManager::onError(QProcess::ProcessError err) {
+    qDebug() << "Level0 [ProcessManager::error]" << err;
+    emit error(err);
 }
 
-void ProcessManager::readyReadStandardError () {
+void ProcessManager::onReadyReadStandardError () {
     QString output = QString::fromUtf8(m_proc->readAllStandardError());
     m_buffer_stderr.append(output);
-    qDebug() << "Level1 [ProcessManager::readyReadStandardError]" << m_id << output;
+    qDebug() << "Level1 [ProcessManager::readyReadStandardError]" << output;
 }
 
-void ProcessManager::readyReadStandardOutput () {
+void ProcessManager::onReadyReadStandardOutput () {
     QString output = QString::fromUtf8(m_proc->readAllStandardOutput());
     m_buffer_stdout.append(output);
-    qDebug() << "Level1 [ProcessManager::readyReadStandardOutput]" << m_id << output;
+    qDebug() << "Level1 [ProcessManager::readyReadStandardOutput]" << output;
 }
