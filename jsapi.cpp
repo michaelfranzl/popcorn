@@ -188,36 +188,6 @@ QObject * JsApi::createDownloader(QString label, QString path, QString filename)
     return dl;
 }
 
-/*
-void JsApi::downloadFile(QString id, QString path, QString filename) {
-    qDebug() << "Level3 [JsApi::downloadFile]" << id << path << filename;
-    Downloader *downloader = new Downloader(this, m_mainWindow->m_network_manager, id, path, filename);
-    connect(downloader, SIGNAL(saved(QString)), this, SLOT(onFileDownloaded(QString)));
-    connect(downloader, SIGNAL(progress(QString, qint64, qint64)), this, SLOT(onFileDownloadProgress(QString, qint64, qint64)));
-    connect(downloader, SIGNAL(error(QString,QString)), this, SLOT(onFileDownloadError(QString,QString)));
-    downloader->get();
-}
-
-void JsApi::onFileDownloadProgress(QString id, qint64 bytesReceived, qint64 bytesTotal) {
-    qDebug() << "Level0 [Downloader::replyProgress]:"<< id << bytesReceived << bytesTotal;
-    QVariantMap params;
-    params.insert("bytesReceived", bytesReceived);
-    params.insert("bytesTotal", bytesTotal);
-    bubbleUp("downloadFileProgress" + id, params);
-}
-
-void JsApi::onFileDownloadError(QString id, QString errormsg) {
-    QVariantMap params;
-    params.insert("errormsg", errormsg);
-    bubbleUp("downloadFileError" + id, params);
-}
-
-void JsApi::onFileDownloaded(QString id) {
-    bubbleUp("downloadFileFinished" + id);
-}
-*/
-
-
 QString JsApi::runUnzip(QString id, QString zip_filepath_rel, QString extract_dir_rel, bool detach) {
     qDebug() << "Level1 [JsApi::runUnzip]" << id << zip_filepath_rel << extract_dir_rel << detach;
 

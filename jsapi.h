@@ -200,14 +200,6 @@ public slots:
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason);
     void onProcessFinished(QString id, QVariantMap contents);
     void onProcessError(QString id, QProcess::ProcessError err);
-
-
-
-    /*
-    void onFileDownloaded(QString id);
-    void onFileDownloadError(QString id, QString errormsg);
-    void onFileDownloadProgress(QString id, qint64 bytesReceived, qint64 bytesTotal);
-    */
 };
 
 #endif // JSAPI_H
