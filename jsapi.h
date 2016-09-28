@@ -104,14 +104,15 @@ private:
 
     
 signals:
-    void udpDatagramReceived(QVariantMap msg, QString ip);
+    void udpDatagramReceived(QString msg, QString ip);
     void optionsDialogAccepted();
     void trayMessageClicked();
     void trayIconActivated(int reason);
 
 private slots:
     void onUdpDatagramReceived();
-    
+
+
 public slots:
     // public slot methods are exposed to JavaScript
     void setConfiguration(QString key, QVariant val);
@@ -152,7 +153,9 @@ public slots:
 
     QString getHash(QString string, int type = 1); // MD5 default
     QString getHashFromHexStr(QString string_hex, int type = 1);
-    qint64 sendUdpMessage(QVariantMap msg, QString host, qint64 port);
+
+    qint64 sendUdpMessage(QString hex, QString host, qint64 port);
+
     void showTrayMessage(QString title, QString msg, int type = 0, int delay = 1000);
     void setTrayToolTip(QString tip);
     void playSound(QString name);

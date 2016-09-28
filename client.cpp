@@ -281,15 +281,13 @@ void Client::onReadyRead() {
                     qDebug() << "Level1 [Client::onReadyRead]" << m_id << "FILE TRANSFER FEEDBACK         <=====" << cmds.at(k);
                     emit readBinaryFeedback(cmds.at(k));
                 }
-
             }
         } else {
-            // JS message
             m_buffer.append(ba);
         }
 
-        qDebug() << "Level1 [Client::onReadyRead]" << m_id << "         <====== now" << ba.length() << "total" << m_readCounter;
-        emit readBinary(ba.length());
+        qDebug() << "Level4 [Client::onReadyRead]" << m_id << "         <====== now" << ba.length() << "total" << m_readCounter;
+        emit readBinary(m_readCounter);
     }
 }
 

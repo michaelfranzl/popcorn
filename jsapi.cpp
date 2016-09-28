@@ -49,20 +49,20 @@ JsApi::JsApi(MainWindow *parent) :
 }
 
 void JsApi::onUdpDatagramReceived() {
-    QByteArray msg;
+    QByteArray ba;
     QHostAddress ip;
-    msg.resize(m_udpServer->pendingDatagramSize());
-    m_udpServer->readDatagram(msg.data(), msg.size(), &ip);
-
-    emit udpDatagramReceived(byteArrayToMap(msg), ip.toString());
+    QString::fromLatin1(ba.toHex());
+    ba.resize(m_udpServer->pendingDatagramSize());
+    m_udpServer->readDatagram(ba.data(), ba.size(), &ip);
+    emit udpDatagramReceived(QString::fromLatin1(ba.toHex()), ip.toString());
 }
 
-qint64 JsApi::sendUdpMessage(QVariantMap msg, QString host, qint64 port) {
+qint64 JsApi::sendUdpMessage(QString hex, QString host, qint64 port) {
     // TODO: why discard QUdpSocket ?
     QUdpSocket *socket = new QUdpSocket(this);
-    qDebug() << "Level2 [JsApi::sendUdpDatagram] Writing UDP datagram for message" << msg;
-    QByteArray serialized_map = mapToByteArray(msg);
-    qint64 bytes_sent = socket->writeDatagram(serialized_map, serialized_map.length(), QHostAddress(host), port);
+    qDebug() << "Level2 [JsApi::sendUdpDatagram] Writing UDP datagram for message";
+    QByteArray ba = QByteArray::fromHex(hex.toLatin1());
+    qint64 bytes_sent = socket->writeDatagram(ba, ba.length(), QHostAddress(host), port);
     socket->close();
     socket->deleteLater();
     return bytes_sent;
