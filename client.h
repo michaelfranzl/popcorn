@@ -44,13 +44,9 @@ class Client : public QObject
 
 public:
     explicit Client(QObject *parent, QString id, QString location);
-
-
-
+    ~Client();
 
     //variables
-
-
     QSslSocket *m_socket;
 
     // variables
@@ -106,7 +102,7 @@ public slots:
     void doFlush();
     QVariantMap setFileMode(QString type, QString fileName, qint64 pos = 0);
     void unsetFileMode();
-    bool createSocket(bool is_server = false, int sd = 0);
+    QString createSocket(bool is_server = false, int sd = 0);
     QString getPeerAddress();
     QVariantMap getInfo();
     int getState();

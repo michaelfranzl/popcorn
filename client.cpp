@@ -31,7 +31,7 @@
 Client::Client(QObject *parent, QString id, QString location) :
     QObject(parent)
 {
-    qDebug() << "Level0 [Client::initialize]:" << id << location;
+    qDebug() << "Level1 [Client::initialize]:" << id << location;
     m_id = id;
     m_socket = NULL;
 
@@ -45,13 +45,12 @@ Client::Client(QObject *parent, QString id, QString location) :
     m_location = location;
 }
 
+Client::~Client() {
+     qDebug() << "Level1 [Client::~Client]:" << m_id;
+}
 
 int Client::connectToServer(QString host, qint64 port) {
-    if (host == "NOMATCH") {
-        qDebug() << "Level1 [Client::connectToServer] NOMATCH";
-        return 0;
-    }
-    qDebug() << "Level1 [Client::connectToServer] Connecting to" << host << port;
+    qDebug() << "Level0 [Client::connectToServer] Connecting to" << host << port;
     m_socket->connectToHost(host, port);
     return m_socket->socketDescriptor();
 }
@@ -71,7 +70,7 @@ void Client::startServerEncryption() {
 
 QString Client::getPeerAddress() {
     QString peerAddress = m_socket->peerAddress().toString();
-    qDebug() << "Level1 [Client::getPeerAddress]" << m_id << peerAddress << m_socket->ConnectedState;
+    qDebug() << "Level1 [Client::getPeerAddress]" << m_id << peerAddress;
     return peerAddress;
 }
 
@@ -81,21 +80,10 @@ int Client::getState() {
 }
 
 
-bool Client::createSocket(bool is_server, int sd) {
+QString Client::createSocket(bool is_server, int sd) {
     qDebug() << "Level1 [Client::createSocket] begin" << m_id << is_server << sd;
 
     m_socket = new QSslSocket(this);
-
-    if (is_server)
-        m_socket->setSocketDescriptor(sd);
-
-    if (m_location == "wan") {
-        QString application_filepath = QCoreApplication::applicationFilePath();
-        QString application_path = QFileInfo(application_filepath).canonicalPath();
-
-        bool result = m_socket->addCaCertificates(application_path + "/certs/*.pem", QSsl::Pem, QRegExp::WildcardUnix);
-        qDebug() << "Level0 [Client::createSocket] RESULT OF CERTS" << application_path + "/certs/*.pem" << result;
-    }
 
     /*
     connect(m_socket, &QSslSocket::encrypted, this, &Client::onSocketEncrypted);
@@ -113,19 +101,32 @@ bool Client::createSocket(bool is_server, int sd) {
     connect(m_socket, SIGNAL(bytesWritten(qint64)), this, SLOT(onBytesWritten(qint64)));
     connect(m_socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
     connect(m_socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(onSocketStateChange(QAbstractSocket::SocketState)));
+    connect(m_socket, SIGNAL(connected()), this, SLOT(onSocketConnected()));
 
-    qDebug() << "Level1 [Client::createSocket] end";
-    return true;
+    if (is_server)
+        // must come after singal connections
+        m_socket->setSocketDescriptor(sd);
+
+    if (m_location == "wan") {
+        QString application_filepath = QCoreApplication::applicationFilePath();
+        QString application_path = QFileInfo(application_filepath).canonicalPath();
+
+        bool result = m_socket->addCaCertificates(application_path + "/certs/*.pem", QSsl::Pem, QRegExp::WildcardUnix);
+        qDebug() << "Level1 [Client::createSocket] RESULT OF CERTS" << application_path + "/certs/*.pem" << result;
+    }
+
+    qDebug() << "Level1 [Client::createSocket] end" << m_id << is_server << m_socket->peerAddress();
+    return m_socket->peerAddress().toString();
 }
 
 
 
 void Client::stop() {
+    qDebug() << "Level0 [Client::stop]" << m_id;
     unsetFileMode();
     m_buffer.resize(0);
     m_socket->close();
-    qDebug() << "Level1 [Client::stop]";
-    // this object will be deleted by the caller
+    m_socket->deleteLater();
 }
 
 
@@ -314,7 +315,7 @@ void Client::unsetBinary() {
 
 
 void Client::onSocketStateChange(QAbstractSocket::SocketState state) {
-    qDebug() << "Level1 [Client::onSocketStateChange]" << m_id << state;
+    qDebug() << "Level2 [Client::onSocketStateChange]" << m_id << state << m_socket->peerAddress();
     emit socketStateChange((int)state);
 }
 

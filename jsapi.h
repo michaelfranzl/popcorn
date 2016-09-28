@@ -79,6 +79,7 @@ extern "C" {
 
 class MainWindow;
 class Server;
+class Client;
 
 class JsApi : public QObject
 {
@@ -100,8 +101,6 @@ private:
     QFile *m_fileHashFile;
 
     bool m_server_udp_started;
-
-    // methods
 
     
 signals:

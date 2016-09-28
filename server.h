@@ -34,6 +34,7 @@ class Server : public QTcpServer
 
 public:
     explicit Server(QObject *parent = 0);
+    ~Server();
 
 
 private:

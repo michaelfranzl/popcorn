@@ -28,6 +28,11 @@ Server::Server(QObject *parent) :
     qDebug() << "Level5 [Server] created";
 }
 
+Server::~Server() {
+    qDebug() << "Level0 [Server::~Server]";
+}
+
+
 bool Server::start(quint16 port) {
     bool success;
     success = listen(QHostAddress::Any, port);
@@ -36,10 +41,11 @@ bool Server::start(quint16 port) {
 }
 
 void Server::stop() {
+    qDebug() << "Level0 [Server::stop] closing";
     close();
 }
 
 void Server::incomingConnection(qintptr socketDescriptor) {
-    qDebug() << "Level1 [Server::incomingConnection] Descriptor is" << socketDescriptor;
+    qDebug() << "Level0 [Server::incomingConnection] Descriptor is" << socketDescriptor;
     emit newSocketDescriptor((int)socketDescriptor);
 }
