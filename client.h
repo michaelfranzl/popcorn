@@ -34,8 +34,6 @@
 #include <QFileInfo>
 #include <QSettings>
 
-#include "message.h"
-
 
 extern QString jail_working_path;
 extern QSettings *settings;
@@ -99,8 +97,8 @@ private slots:
 public slots:
     int connectToServer(QString host, qint64 port);
     void stop();
-    int setMessage(QVariantMap msg);
-    QVariantMap getMessage();
+    int setMessage(QString hex);
+    QString getMessage();
     qint64 writePlain(QString cmd);
     qint64 writeBinary(qint64 chunksize);
     void setBinary(qint64 size);

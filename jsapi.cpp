@@ -28,6 +28,7 @@
 #include <QHostInfo>
 #include <QNetworkInterface>
 #include <QMessageBox>
+#include <QDataStream>
 
 JsApi::JsApi(MainWindow *parent) :
     QObject(parent)
@@ -47,19 +48,25 @@ JsApi::JsApi(MainWindow *parent) :
     connect(showOptionsShortcut, &QShortcut::activated, this, &JsApi::showOptionsDialog);
 }
 
-// ================== private =======================
-
 void JsApi::onUdpDatagramReceived() {
     QByteArray msg;
     QHostAddress ip;
     msg.resize(m_udpServer->pendingDatagramSize());
     m_udpServer->readDatagram(msg.data(), msg.size(), &ip);
 
-    Message m(this, msg);
-    emit udpDatagramReceived(m.toMap(), ip.toString());
+    emit udpDatagramReceived(byteArrayToMap(msg), ip.toString());
 }
 
-// ================== public =======================
+qint64 JsApi::sendUdpMessage(QVariantMap msg, QString host, qint64 port) {
+    // TODO: why discard QUdpSocket ?
+    QUdpSocket *socket = new QUdpSocket(this);
+    qDebug() << "Level0 [JsApi::sendUdpDatagram] Writing UDP datagram for message" << msg;
+    QByteArray serialized_map = mapToByteArray(msg);
+    qint64 bytes_sent = socket->writeDatagram(serialized_map, serialized_map.length(), QHostAddress(host), port);
+    socket->close();
+    socket->deleteLater();
+    return bytes_sent;
+}
 
 int JsApi::getQtVersion() {
     return QT_VERSION;
@@ -203,6 +210,29 @@ void JsApi::runUpgrader(QString id, bool detach) {
 }
 #endif
 
+QByteArray JsApi::mapToByteArray(QVariantMap map) {
+    QByteArray ba = QByteArray();
+    QDataStream stream(&ba, QIODevice::WriteOnly);
+    stream << map;
+    return ba;
+}
+
+QVariantMap JsApi::byteArrayToMap(QByteArray ba) {
+    QDataStream stream(&ba, QIODevice::ReadOnly);
+    QVariantMap map;
+    stream >> map;
+    return map;
+}
+
+QString JsApi::mapToHex(QVariantMap map) {
+    return mapToByteArray(map).toHex();
+}
+
+QVariantMap JsApi::hexToMap(QString hex) {
+    QByteArray ba = QByteArray::fromHex(hex.toLatin1());
+    return byteArrayToMap(ba);
+}
+
 void JsApi::showOptionsDialog() {
     m_mainWindow->optionsDialog->loadSettings();
     m_mainWindow->optionsDialog->show();
@@ -334,17 +364,6 @@ QString JsApi::getHashFromHexStr(QString string_hex, int type) {
     h = QCryptographicHash::hash(ba, (QCryptographicHash::Algorithm)type);
     result = QString(h.toHex());
     return result;
-}
-
-qint64 JsApi::sendUdpMessage(QVariantMap msg, QString host, qint64 port) {
-    Message * m = new Message(this, msg);
-    QUdpSocket *socket = new QUdpSocket(this);
-    qDebug() << "Level3 [JsApi::sendUdpDatagram] Writing UDP datagram for message" << msg;
-    qint64 bytes_sent = socket->writeDatagram(m->toByteArray(), m->toByteArray().length(), QHostAddress(host), port);
-    m->deleteLater();
-    socket->close();
-    socket->deleteLater();
-    return bytes_sent;
 }
 
 void JsApi::debug(QString str) {

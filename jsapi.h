@@ -36,7 +36,6 @@
 
 #include "jsapi.h"
 #include "mainwindow.h"
-#include "message.h"
 #include "client.h"
 #include "server.h"
 #include "process_manager.h"
@@ -53,13 +52,9 @@
 
 #ifdef Q_OS_LINUX
     #include <signal.h>
-    //#include <QX11Info>
     #include <X11/Xlib.h>
-
-    //#include <X11/Xutil.h>
     #include <sys/resource.h>
-    // apt-get install libxss-dev
-    #include <X11/extensions/scrnsaver.h>
+    #include <X11/extensions/scrnsaver.h> // apt-get install libxss-dev
     #undef Bool
 #endif
 
@@ -68,8 +63,6 @@
     #include <sys/resource.h>
     #include <ApplicationServices/ApplicationServices.h>
 #endif
-
-#include <QChar>
 
 #ifdef Q_OS_LINUX
 extern Display *display;
@@ -99,6 +92,7 @@ public:
 private:
     // variables
     QUdpSocket *m_udpServer;
+
     QMap<QString, QVariantMap> m_bubbleParams;
     qint64 m_bubbleParamID;
 
@@ -190,6 +184,11 @@ public slots:
     QString getRandomBytes(int len);
 
     QStringList getCmdlineArgs();
+
+    QString mapToHex(QVariantMap map);
+    QVariantMap hexToMap(QString hex);
+    QByteArray mapToByteArray(QVariantMap map);
+    QVariantMap byteArrayToMap(QByteArray ba);
 
     // regular slots
     void onOptionsDialogAccepted();

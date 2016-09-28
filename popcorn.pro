@@ -24,7 +24,6 @@ RC_FILE = popcorn.rc
 SOURCES += main.cpp\
         mainwindow.cpp \
     jsapi.cpp \
-    message.cpp \
     server.cpp \
     client.cpp \
     process_manager.cpp \
@@ -36,7 +35,6 @@ SOURCES += main.cpp\
 HEADERS  += \
     mainwindow.h \
     jsapi.h \
-    message.h \
     server.h \
     client.h \
     optionsdialog.h \

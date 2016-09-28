@@ -26,6 +26,7 @@
 #include <QSslCipher>
 #include <QSslKey>
 #include <QSslConfiguration>
+#include <QHostAddress>
 
 Client::Client(QObject *parent, QString id, QString location) :
     QObject(parent)
@@ -141,20 +142,16 @@ void Client::doFlush() {
 }
 
 
-QVariantMap Client::getMessage() {
+QString Client::getMessage() {
     qDebug() << "Level1 [Client::getMessage]";
-    Message * m = new Message(this, m_buffer);
-    m->deleteLater();
-    return m->toMap();
+    return QString::fromLatin1(m_buffer.toHex());
 }
 
 
-int Client::setMessage(QVariantMap msg) {
-    qDebug() << "Level1 [Client::setMessage]" << m_id;
-    Message * m = new Message(this, msg);
+int Client::setMessage(QString hex) {
+    qDebug() << "Level1 [Client::setMessage]";
     m_buffer.resize(0);
-    m_buffer.append(m->m_bodySerialized);
-    m->deleteLater();
+    m_buffer.append(QByteArray::fromHex(hex.toLatin1()));
     return m_buffer.length();
 }
 
