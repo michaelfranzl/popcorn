@@ -108,10 +108,10 @@ void MainWindow::init(QString index_file_cmdline) {
         inspector = new QWebInspector();
         inspector->setPage(webView->page());
         inspector->setGeometry(QRect(500, 10, 1000, 700));
-        //inspector->show();
+        inspector->show();
     }
 
-    QIcon icon = QIcon(application_path + "/popcorn.png");
+    QIcon icon = QIcon(application_path + "/" + APPNAME + ".png");
     m_trayIcon = new QSystemTrayIcon(this);
     m_trayIcon->setIcon(icon);
     m_trayIcon->show();

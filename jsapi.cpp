@@ -85,6 +85,10 @@ QObject * JsApi::createTcpServer() {
     return tcps;
 }
 
+QString JsApi::getAppName() {
+    return APPNAME;
+}
+
 QString JsApi::getRandomBytes(int len) {
     QByteArray buf = QByteArray();
     buf.resize(len);
@@ -466,18 +470,26 @@ bool JsApi::fileRename(QString infilepath_rel, QString outfilepath_rel) {
     return QFile().rename(jail_working_path + infilepath_rel, jail_working_path + outfilepath_rel);
 }
 
-qint64 JsApi::fileWrite(QString jail_type, QString filepath_rel, QString content, int open_mode) {
-    if (filepath_rel.contains("..")) return -4;
-    QString filepath_abs;
-    if (jail_type == "working") {
-        filepath_abs = jail_working_path + filepath_rel;
-    } else if (jail_type == "home") {
-        filepath_abs = home_path + filepath_rel;
-    } else if (jail_type == "application") {
-        filepath_abs = application_path + filepath_rel;
-    } else {
-        return -3;
+QString JsApi::relPathToJailedAbsPath(QString jail_type, QString path_rel) {
+    QString result;
+    if (path_rel.contains("..")) {
+        return "";
     }
+    if (jail_type == "working") {
+        result = jail_working_path + path_rel;
+    } else if (jail_type == "home") {
+        result = home_path + path_rel;
+    } else if (jail_type == "application") {
+        result = application_path + path_rel;
+    } else {
+        return "";
+    }
+    return result;
+}
+
+qint64 JsApi::fileWrite(QString jail_type, QString filepath_rel, QString content, int open_mode) {
+    QString filepath_abs = relPathToJailedAbsPath(jail_type, filepath_rel);
+    if (filepath_abs == "") return -1;
 
     QFile f(filepath_abs);
     if (! f.open((QIODevice::OpenMode)open_mode)) return -1;
@@ -487,17 +499,8 @@ qint64 JsApi::fileWrite(QString jail_type, QString filepath_rel, QString content
 }
 
 QString JsApi::fileRead(QString jail_type, QString filepath_rel) {
-    if (filepath_rel.contains("..")) return "Error -4";
-    QString filepath_abs;
-    if (jail_type == "working") {
-        filepath_abs = jail_working_path + filepath_rel;
-    } else if (jail_type == "home") {
-        filepath_abs = home_path + filepath_rel;
-    } else if (jail_type == "application") {
-        filepath_abs = application_path + filepath_rel;
-    } else {
-        return "Error -3";
-    }
+    QString filepath_abs = relPathToJailedAbsPath(jail_type, filepath_rel);
+    if (filepath_abs == "") return "Error -3";
 
     QFile f(filepath_abs);
     if (f.size() > 1000000) return "Error -2";
@@ -522,17 +525,9 @@ bool JsApi::fileCopy(QString infilepath_abs_or_rel, QString outfilepath_rel) {
 
 
 bool JsApi::fileExists(QString jail_type, QString filepath_rel) {
-    if (filepath_rel.contains("..")) return "Error -4";
-    QString filepath_abs;
-    if (jail_type == "working") {
-        filepath_abs = jail_working_path + filepath_rel;
-    } else if (jail_type == "home") {
-        filepath_abs = home_path + filepath_rel;
-    } else if (jail_type == "application") {
-        filepath_abs = application_path + filepath_rel;
-    } else {
-        return -3;
-    }
+    QString filepath_abs = relPathToJailedAbsPath(jail_type, filepath_rel);
+    if (filepath_abs == "") return -1;
+
     QFile f(filepath_abs);
     bool result = f.exists();
     f.close();
@@ -541,30 +536,14 @@ bool JsApi::fileExists(QString jail_type, QString filepath_rel) {
 
 
 bool JsApi::fileRemove(QString jail_type, QString filepath_rel) {
-    if (filepath_rel.contains("..")) return false;
-    QString filepath_abs;
-    if (jail_type == "working") {
-        filepath_abs = jail_working_path + filepath_rel;
-    } else if (jail_type == "home") {
-        filepath_abs = home_path + filepath_rel;
-    } else {
-        return -3;
-    }
+    QString filepath_abs = relPathToJailedAbsPath(jail_type, filepath_rel);
+    if (filepath_abs == "") return -1;
     return QDir().remove(filepath_abs);
 }
 
 QStringList JsApi::ls(QString jail_type, QString path_rel, QStringList filters) {
-    if (path_rel.contains("..")) return QStringList();
-    QString path_abs;
-    if (jail_type == "working") {
-        path_abs = jail_working_path + path_rel;
-    } else if (jail_type == "home") {
-        path_abs = home_path + path_rel;
-    } else if (jail_type == "application") {
-        path_abs = application_path + path_rel;
-    } else {
-        return QStringList();
-    }
+    QString path_abs = relPathToJailedAbsPath(jail_type, path_rel);
+    if (path_abs == "") return QStringList();
 
     QDir d(path_abs);
     if (!d.exists()) return QStringList();
@@ -574,14 +553,62 @@ QStringList JsApi::ls(QString jail_type, QString path_rel, QStringList filters) 
 }
 
 
-bool JsApi::dirRemove(QString path_rel) {
-    if (path_rel.contains("..")) return false;
-    return QDir(jail_working_path + path_rel).removeRecursively();
+bool JsApi::dirRemove(QString jail_type, QString path_rel) {
+    QString path_abs = relPathToJailedAbsPath(jail_type, path_rel);
+    if (path_abs == "") return false;
+    return QDir(path_abs).removeRecursively();
 }
 
-bool JsApi::dirMake(QString path_rel) {
-    if (path_rel.contains("..")) return false;
-    return QDir().mkpath(jail_working_path + path_rel);
+bool JsApi::dirMake(QString jail_type, QString path_rel) {
+    QString path_abs = relPathToJailedAbsPath(jail_type, path_rel);
+    if (path_abs == "") return false;
+    return QDir().mkpath(path_abs);
+}
+
+bool JsApi::dirCopy(QString dst_path_rel, QString dst_jail_type, QString src_path_abs_or_rel, QString src_jail_type) {
+
+    QString dst_path_abs = relPathToJailedAbsPath(dst_jail_type, dst_path_rel);
+    if (dst_path_abs == "") return false;
+
+    QString src_path_abs;
+    if (settings->value("fileread_jailed").toString() == "true") {
+        src_path_abs = relPathToJailedAbsPath(src_jail_type, src_path_abs_or_rel);
+        if (src_path_abs == "") return false;
+    } else {
+        src_path_abs = src_path_abs_or_rel;
+    }
+
+    QDir dst_dir(dst_path_abs);
+    if (! dst_dir.exists()) {
+        qDebug() << "Level0 [JsApi::dirCopy] dst dir not existing";
+        return false;
+    }
+
+    QDir src_dir(src_path_abs);
+    if (! src_dir.exists()) {
+        qDebug() << "Level0 [JsApi::dirCopy] src dir not existing";
+        return false;
+    }
+
+    bool result;
+    foreach (QString subdirpath, src_dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        QString dst_path_new = dst_path_abs + "/" + subdirpath;
+        result = QDir().mkpath(dst_path_new); // creates parent dirs
+        if (!result) return false;
+        qDebug() << "Level0 [JsApi::dirCopy]  creating dir" << result << dst_path_new;
+        result = dirCopy(dst_path_rel + "/" + subdirpath,
+                         dst_jail_type,
+                         src_path_abs_or_rel + "/" + subdirpath,
+                         dst_path_new); // recursion
+        if (!result) return false;
+    }
+
+    foreach (QString fname, src_dir.entryList(QDir::Files)) {
+        bool result = QFile::copy(src_path_abs + "/" + fname, dst_path_abs + "/" + fname);
+        if (!result) return false;
+        qDebug() << "Level0 [JsApi::dirCopy]   copy file" << result << fname;
+    }
+    return true;
 }
 
 

@@ -38,7 +38,7 @@ Display *display;
 
 
 void logToFile(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-    QString pathLog = home_path + "/popcorn.log";
+    QString pathLog = home_path + "/" APPNAME ".log";
     QFile f(pathLog);
     f.open(QIODevice::Append);
     QDateTime datetime = QDateTime::currentDateTime();
@@ -73,7 +73,7 @@ void noLog(QtMsgType type, const QMessageLogContext &context, const QString &msg
 
 void purgeLogfile() {
     qDebug() << "Truncating Logfile";
-    QString pathLog = home_path + "/popcorn.log";
+    QString pathLog = home_path + "/" APPNAME ".log";
     QFile f(pathLog);
     f.open(QFile::WriteOnly|QFile::Truncate);
     f.close();
@@ -86,13 +86,13 @@ int main(int argc, char *argv[]) {
     QApplication::setApplicationVersion(QString::number(VERSION_MAJOR) + "." + QString::number(VERSION_MINOR) + "." + QString::number(VERSION_PATCH));
 
 #ifdef Q_OS_LINUX
-    home_path = QDir::homePath() + "/.config/popcorn/";
+    home_path = QDir::homePath() + "/.config/" APPNAME "/";
 #else
-    home_path = QDir::homePath() + "/popcorn/";
+    home_path = QDir::homePath() + "/" APPNAME "/";
 #endif
     QDir().mkpath(home_path);
 
-    QCommandLineOption ini_file_option("c", "Configuration file to use", "ini_file", home_path + "/popcorn.ini");
+    QCommandLineOption ini_file_option("c", "Configuration file to use", "ini_file", home_path + APPNAME ".ini");
     QCommandLineOption index_file_option("i", "Index file (.html) to load", "index_file");
 
     QCommandLineParser parser;
@@ -112,17 +112,17 @@ int main(int argc, char *argv[]) {
     settings = new QSettings(ini_file, QSettings::IniFormat);
     qDebug() << "[main]: ini file is" << settings->fileName();
 
-    QString filespath = QDir::homePath() + "/popcorn-files/";
+    QString filespath = QDir::homePath() + "/" APPNAME "-files/";
 
-    if (!settings->contains("window_title")) settings->setValue("window_title", "Popcorn Popup");
-    if (!settings->contains("webinspector")) settings->setValue("webinspector", "false");
-    if (!settings->contains("jail_working")) settings->setValue("jail_working", filespath);
+    if (!settings->contains("window_title"))    settings->setValue("window_title", APPNAME " Popup");
+    if (!settings->contains("webinspector"))    settings->setValue("webinspector", "false");
+    if (!settings->contains("jail_working"))    settings->setValue("jail_working", filespath);
     if (!settings->contains("fileread_jailed")) settings->setValue("fileread_jailed", "true");
-    if (!settings->contains("log_to_file")) settings->setValue("log_to_file", "false");
-    if (!settings->contains("log_to_stdout")) settings->setValue("log_to_stdout", "false");
-    if (!settings->contains("context_menu")) settings->setValue("context_menu", "true");
-    if (!settings->contains("log_threshold")) settings->setValue("log_threshold", 0);
-    if (!settings->contains("index_file")) settings->setValue("index_file", "");
+    if (!settings->contains("log_to_file"))     settings->setValue("log_to_file", "false");
+    if (!settings->contains("log_to_stdout"))   settings->setValue("log_to_stdout", "false");
+    if (!settings->contains("context_menu"))    settings->setValue("context_menu", "true");
+    if (!settings->contains("log_threshold"))   settings->setValue("log_threshold", 0);
+    if (!settings->contains("index_file"))      settings->setValue("index_file", "");
 
     jail_working_path = settings->value("jail_working").toString();
 

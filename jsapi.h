@@ -102,6 +102,8 @@ private:
 
     bool m_server_udp_started;
 
+    QString relPathToJailedAbsPath(QString jail_type, QString path_rel);
+
     
 signals:
     void udpDatagramReceived(QString msg, QString ip);
@@ -126,12 +128,14 @@ public slots:
     bool createUdpServer(qint16 port);
     QObject * createTcpServer();
 
+    QString getAppName();
     void windowMinimize();
 
     // directory operations
-    bool dirMake(QString path_rel);
-    bool dirRemove(QString path_rel);
+    bool dirMake(QString jail_type, QString path_rel);
+    bool dirRemove(QString jail_type, QString path_rel);
     QStringList ls(QString jail_type, QString path_rel, QStringList filters);
+    bool dirCopy(QString dst_path_rel, QString dst_jail_type, QString src_path_abs_or_rel, QString src_jail_type = "");
 
     // file operations
     qint64 fileSize(QString infilepath_abs_or_rel);

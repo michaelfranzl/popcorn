@@ -1,60 +1,16 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+      body {
+        font-family: mono;
+        font-size: 10px;
+      }
+    </style>
   </head>
 
   <body>
-    <p>popcorn version <span id="version"></span></p>
     <p id="msg"></p>
-    
-    <script>
-      document.getElementById("version").innerHTML = API.getVersion();
-      var msg = document.getElementById("msg");
-      
-      function navigateTo(path) {
-        setTimeout(function() {
-          location.href = "file:///" + path + "assets/index.html";
-        }, 3000);
-      }
-      
-      msg.innerHTML = "Checking for assets...";
-      
-      var jail_working_path = API.getConfiguration("jail_working");
-      var application_path = API.getStaticPaths().application_path;
-      
-      var awv = null; // assets version in jail_working directory
-      var aav = null; // assets version in application directory
-      
-      if (API.fileExists("working", "assets/version.txt")) {
-        var str = API.fileRead("working", "assets/version.txt");
-        awv = parseInt(str.replace(/\./g, ""));
-      }
-      
-      if (API.fileExists("application", "assets/version.txt")) {
-        var str = API.fileRead("application", "assets/version.txt");
-        aav = parseInt(str.replace(/\./g, ""));
-      }
-
-      if (awv && !aav) {
-        msg.innerHTML = "Assets only found in working directory. Loading...";
-        navigateTo(jail_working_path);
-        
-      } else if (!awv && aav) {
-        msg.innerHTML = "Assets only found in application directory. Loading...";
-        navigateTo(application_path);
-        
-      } else if (!awv && !aav) {
-        msg.innerHTML = "Assets not found in either working directory (" + jail_working_path + ") or application directory (" + application_path + ").";
-        
-      } else if (awv > aav) {
-        msg.innerHTML = "Newer assets found in working directory. Loading...";
-        navigateTo(jail_working_path);
-      
-      } else {
-        msg.innerHTML = "Newer assets found in application directory. Loading...";
-        navigateTo(application_path);
-      }
-      
-    </script>
+    <script src="boot.js"></script>
   </body>
 </html>

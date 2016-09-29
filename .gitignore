@@ -39,3 +39,5 @@ zip_stage
 *.xcf
 *.old
 assets
+adminscripts
+plugins
