@@ -500,11 +500,11 @@ qint64 JsApi::fileWrite(QString jail_type, QString filepath_rel, QString content
 
 QString JsApi::fileRead(QString jail_type, QString filepath_rel) {
     QString filepath_abs = relPathToJailedAbsPath(jail_type, filepath_rel);
-    if (filepath_abs == "") return "Error -3";
+    if (filepath_abs == "") return "";
 
     QFile f(filepath_abs);
-    if (f.size() > 1000000) return "Error -2";
-    if (! f.open(QIODevice::ReadOnly)) return "Error -1";
+    if (f.size() > 1000000) return "";
+    if (! f.open(QIODevice::ReadOnly)) return "";
     QByteArray contents = f.readAll();
     f.close();
     return QString::fromUtf8(contents);

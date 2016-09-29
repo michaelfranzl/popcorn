@@ -38,7 +38,6 @@ OptionsDialog::~OptionsDialog()
 
 void OptionsDialog::loadSettings() {
     ui->labelVersion->setText(m_version);
-    ui->indexFileInput->setText(settings->value("index_file").toString());
     ui->jailWorkingInput->setText(jail_working_path);
     ui->limitFileReadingCheckBox->setChecked(settings->value("fileread_jailed").toString() == "true");
     ui->labelIniFile->setText(settings->fileName());
@@ -46,7 +45,6 @@ void OptionsDialog::loadSettings() {
 
 void OptionsDialog::accept() {
     qDebug() << "[OptionsDialog::accept]";
-    settings->setValue("index_file", ui->indexFileInput->text());
     settings->setValue("jail_working", ui->jailWorkingInput->text());
     settings->setValue("fileread_jailed", ui->limitFileReadingCheckBox->isChecked());
 

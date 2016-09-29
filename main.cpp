@@ -93,13 +93,13 @@ int main(int argc, char *argv[]) {
     QDir().mkpath(home_path);
 
     QCommandLineOption ini_file_option("c", "Configuration file to use", "ini_file", home_path + APPNAME ".ini");
-    QCommandLineOption index_file_option("i", "Index file (.html) to load", "index_file");
+    QCommandLineOption development_option("d", "Development. Boot from ./assets/index.html");
 
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOption(ini_file_option);
-    parser.addOption(index_file_option);
+    parser.addOption(development_option);
     parser.process(a);
 
 #ifdef Q_OS_LINUX
@@ -122,7 +122,6 @@ int main(int argc, char *argv[]) {
     if (!settings->contains("log_to_stdout"))   settings->setValue("log_to_stdout", "false");
     if (!settings->contains("context_menu"))    settings->setValue("context_menu", "true");
     if (!settings->contains("log_threshold"))   settings->setValue("log_threshold", 0);
-    if (!settings->contains("index_file"))      settings->setValue("index_file", "");
 
     jail_working_path = settings->value("jail_working").toString();
 
@@ -147,7 +146,7 @@ int main(int argc, char *argv[]) {
     settings->setValue("exit", "false"); // this tells us if the program has crashed or exited normally
 
     MainWindow w;
-    w.init(parser.value(index_file_option));
+    w.init(parser.isSet(development_option));
     w.show();
 
     return a.exec();

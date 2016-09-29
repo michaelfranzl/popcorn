@@ -33,7 +33,6 @@ function mylog() {
   var line = "";
   var argarray = [];
   for ( var i = 0; i < args.length; i++ ) {
-    console.error(args[i]);
     if (typeof args[i] == "object"  ) {
       argarray.push( JSON.stringify(args[i], null, " ") );
     } else {
@@ -77,7 +76,7 @@ function setupAssets() {
   var url;
   var awv = null; // assets version in jail_working directory
   var aav = null; // assets version in application directory
-
+  
   if (API.fileExists("working", "assets/js/version.js")) {
     var str = API.fileRead("working", "assets/js/version.js");
     var matches = str.match(/assets_version = ['"](.+)["']/);
@@ -86,7 +85,7 @@ function setupAssets() {
     }
     mylog("Found assets in working dir: Version ", matches[1]);
   }
-
+  
   if (API.fileExists("application", "assets/js/version.js")) {
     var str = API.fileRead("application", "assets/js/version.js");
     var matches = str.match(/assets_version = ['"](.+)["']/);
@@ -95,7 +94,7 @@ function setupAssets() {
     }
     mylog("Found assets in application dir: Version", matches[1]);
   }
-
+  
   
   if (!awv && !aav) {
     mylog("Assets not found in either working directory (", jail_paths.working, ") or application directory (", paths.application, ").");
@@ -138,28 +137,25 @@ function setupPlugins() {
     var plugin_name = plugin_dir;
     var regexp = new RegExp("plugin_" + plugin_name + "_version = ['\"](.+)[\"']");
     
-    var version_str_app = API.fileRead("application", "plugins/" + plugin_dir + "/js/version.js");
-    var matches = version_str_app.match(regexp);
+    var version_str_app = API.fileRead("application", "plugins/" + plugin_dir + "/version.txt");
     var version_appdir;
-    if (matches) {
-      version_appdir = versionStrToNumber(matches[1]);
+    if (version_str_app) {
+      version_appdir = versionStrToNumber(version_str_app);
       mylog("Plugin", plugin_name, "in app dir:", version_appdir);
     } else {
       mylog("Plugin", plugin_name, "in app dir: Could not find version. Skipping.");
       continue;
     }
     
-    var versionfile_workingdir = "plugins/" + plugin_dir + "/js/version.js";
-    var exists_in_workindir = API.fileExists("working", versionfile_workingdir);
+    var versionfile_workingdir = "plugins/" + plugin_dir + "/version.txt";
     var version_str_working = API.fileRead("working", versionfile_workingdir);
-    var matches = version_str_working.match(regexp);
     var version_workingdir;
-    if (matches) {
-      version_workingdir = versionStrToNumber(matches[1]);
+    if (version_str_working) {
+      version_workingdir = versionStrToNumber(version_str_working);
       mylog("Plugin", plugin_name, "in working dir:", version_workingdir);
     }
     
-    if (!exists_in_workindir || version_appdir > version_workingdir) {
+    if (version_workingdir && version_appdir > version_workingdir) {
       mylog("Plugin", plugin_name, "copying.");
       copyDirFromAppDirToWorkingDir("plugins/" + plugin_dir);
     } else {

@@ -60,10 +60,10 @@ public:
     ~MainWindow();
 
     // methods
-    void init(QString index_file_cmdline = "");
+    void init(bool is_development = "false");
     void resizeEvent(QResizeEvent *event);
     void moveEvent(QMoveEvent *event);
-    void bootstrap(QString index_file_cmdline);
+    void bootstrap(bool is_development);
 
     //variables
     QWebView * webView;

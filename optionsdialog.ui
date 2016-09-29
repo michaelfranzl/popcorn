@@ -119,29 +119,6 @@
     <string>0.0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_9">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>80</y>
-     <width>431</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Index File:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="indexFileInput">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>100</y>
-     <width>481</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QCheckBox" name="limitFileReadingCheckBox">
    <property name="geometry">
     <rect>

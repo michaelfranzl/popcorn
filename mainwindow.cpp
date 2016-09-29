@@ -42,7 +42,7 @@ MainWindow::~MainWindow() {
     qDebug() << "Level0 [MainWindow::~MainWindow] Done";
 }
 
-void MainWindow::init(QString index_file_cmdline) {
+void MainWindow::init(bool is_development) {
     //qApp->installEventFilter(this);
   
     setWindowTitle(settings->value("window_title").toString());
@@ -70,7 +70,7 @@ void MainWindow::init(QString index_file_cmdline) {
 
     webView->show();
 
-    bootstrap(index_file_cmdline);
+    bootstrap(is_development);
 
     // restore saved window geometry from .ini file
     QVariant size = settings->value("main_window_geometry");
@@ -121,20 +121,15 @@ void MainWindow::init(QString index_file_cmdline) {
 
 
 
-void MainWindow::bootstrap(QString index_file_cmdline) {
-    QString index_file_ini = settings->value("index_file").toString();
+void MainWindow::bootstrap(bool is_development) {
     QString index_file_chosen;
 
-    if ( index_file_cmdline != "" ) {
+    if ( is_development ) {
         // given on command line has highest priority
-        index_file_chosen = "file:///" + index_file_cmdline;
-
-    } else if ( index_file_ini != "" ) {
-        // given in ini file
-        index_file_chosen = index_file_ini;
+        index_file_chosen = "file:///" + application_path + "assets/index.html";
 
     } else {
-        index_file_chosen = "file:///" + application_path + "/boot.html";
+        index_file_chosen = "file:///" + application_path + "boot.html";
     }
 
     qDebug() << "Level0 [MainWindow::bootstrap] Navigating to" << index_file_chosen;
