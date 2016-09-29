@@ -541,15 +541,15 @@ bool JsApi::fileRemove(QString jail_type, QString filepath_rel) {
     return QDir().remove(filepath_abs);
 }
 
-QStringList JsApi::ls(QString jail_type, QString path_rel, QStringList filters) {
+QStringList JsApi::ls(QString jail_type, QString path_rel, QStringList wildcard, int filter) {
     QString path_abs = relPathToJailedAbsPath(jail_type, path_rel);
     if (path_abs == "") return QStringList();
 
     QDir d(path_abs);
     if (!d.exists()) return QStringList();
 
-    d.setFilter(QDir::Files | QDir::Hidden | QDir::Dirs | QDir::NoDotAndDotDot);
-    return d.entryList(filters);
+    d.setFilter((QDir::Filter)filter);
+    return d.entryList(wildcard);
 }
 
 

@@ -134,7 +134,7 @@ public slots:
     // directory operations
     bool dirMake(QString jail_type, QString path_rel);
     bool dirRemove(QString jail_type, QString path_rel);
-    QStringList ls(QString jail_type, QString path_rel, QStringList filters);
+    QStringList ls(QString jail_type, QString path_rel, QStringList wildcard, int filter = (QDir::Files | QDir::Hidden | QDir::Dirs | QDir::NoDotAndDotDot));
     bool dirCopy(QString dst_path_rel, QString dst_jail_type, QString src_path_abs_or_rel, QString src_jail_type = "");
 
     // file operations
