@@ -114,7 +114,7 @@ QVariantMap Database::run(QString querystring) {
             }
             view.append(map);
         }
-        result.insert("lastInsertID", m_query.lastInsertId());
+        result.insert("last_insert_id", m_query.lastInsertId());
     } else {
         errors.insert("driver", m_query.lastError().driverText());
         errors.insert("db", m_query.lastError().databaseText());
