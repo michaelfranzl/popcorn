@@ -35,11 +35,6 @@ JsApi::JsApi(MainWindow *parent) :
 {
     m_mainWindow = parent;
 
-    m_bubbleParams = QMap<QString, QVariantMap>();
-    m_bubbleParamID = 0;
-
-    m_server_udp_started = false;
-
 #ifdef Q_OS_MAC
     QShortcut *showOptionsShortcut = new QShortcut(QKeySequence(Qt::ControlModifier + Qt::Key_O), m_mainWindow);
 #else
@@ -48,41 +43,19 @@ JsApi::JsApi(MainWindow *parent) :
     connect(showOptionsShortcut, &QShortcut::activated, this, &JsApi::showOptionsDialog);
 }
 
-void JsApi::onUdpDatagramReceived() {
-    QByteArray ba;
-    QHostAddress ip;
-    QString::fromLatin1(ba.toHex());
-    ba.resize(m_udpServer->pendingDatagramSize());
-    m_udpServer->readDatagram(ba.data(), ba.size(), &ip);
-    emit udpDatagramReceived(QString::fromLatin1(ba.toHex()), ip.toString());
+
+QObject * JsApi::createUdpServer() {
+    QUdpSocket * s = new UdpServer(this);
+    return s;
 }
 
-qint64 JsApi::sendUdpMessage(QString hex, QString host, qint64 port) {
-    // TODO: why discard QUdpSocket ?
-    QUdpSocket *socket = new QUdpSocket(this);
-    qDebug() << "Level2 [JsApi::sendUdpDatagram] Writing UDP datagram for message";
-    QByteArray ba = QByteArray::fromHex(hex.toLatin1());
-    qint64 bytes_sent = socket->writeDatagram(ba, ba.length(), QHostAddress(host), port);
-    socket->close();
-    socket->deleteLater();
-    return bytes_sent;
+QObject * JsApi::createTcpServer() {
+    TcpServer * tcps = new TcpServer(this);
+    return tcps;
 }
 
 int JsApi::getQtVersion() {
     return QT_VERSION;
-}
-
-bool JsApi::createUdpServer(qint16 port) {
-    if (m_server_udp_started) return true;
-    m_udpServer = new QUdpSocket(this);
-    m_server_udp_started = m_udpServer->bind(port, QUdpSocket::DontShareAddress);
-    connect(m_udpServer, &QUdpSocket::readyRead, this, &JsApi::onUdpDatagramReceived);
-    return m_server_udp_started;
-}
-
-QObject * JsApi::createTcpServer() {
-    Server * tcps = new Server(this);
-    return tcps;
 }
 
 QString JsApi::getAppName() {
@@ -108,7 +81,7 @@ QVariantMap JsApi::getOsInfo() {
     return map;
 }
 
-bool JsApi::getMinimizedStatus() {
+bool JsApi::windowGetMinimizedStatus() {
     return m_mainWindow->windowState().testFlag(Qt::WindowMinimized);
 }
 
@@ -145,8 +118,6 @@ void JsApi::restart() {
         settings->setValue("minified_state", "false");
     }
     settings->sync();
-
-    m_udpServer->close();
 
     QProcess proc;
     QStringList used_args = QApplication::arguments();

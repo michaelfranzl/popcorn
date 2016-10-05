@@ -37,7 +37,8 @@
 #include "jsapi.h"
 #include "mainwindow.h"
 #include "client.h"
-#include "server.h"
+#include "tcpserver.h"
+#include "udpserver.h"
 #include "process_manager.h"
 #include "downloader.h"
 #include "database.h"
@@ -78,7 +79,7 @@ extern "C" {
 }
 
 class MainWindow;
-class Server;
+class TcpServer;
 class Client;
 
 class JsApi : public QObject
@@ -92,31 +93,28 @@ public:
 
 private:
     // variables
-    QUdpSocket *m_udpServer;
-
     QMap<QString, QVariantMap> m_bubbleParams;
     qint64 m_bubbleParamID;
 
     QCryptographicHash *m_fileHashCrypto;
     QFile *m_fileHashFile;
 
-    bool m_server_udp_started;
-
     QString relPathToJailedAbsPath(QString jail_type, QString path_rel);
 
     
 signals:
-    void udpDatagramReceived(QString msg, QString ip);
     void optionsDialogAccepted();
     void trayMessageClicked();
     void trayIconActivated(int reason);
 
 private slots:
-    void onUdpDatagramReceived();
 
 
 public slots:
     // public slot methods are exposed to JavaScript
+    void shutdown();
+    void restart();
+
     void setConfiguration(QString key, QVariant val);
     QVariant getConfiguration(QString key);
     void clearConfiguration(QString key);
@@ -124,12 +122,21 @@ public slots:
     QObject * createDatabase(QString label);
     QObject * createDownloader(QString label, QString path, QString filename);
     QObject * createClient(QString id, QString location);
-
-    bool createUdpServer(qint16 port);
+    QObject * createUdpServer();
     QObject * createTcpServer();
 
     QString getAppName();
-    void windowMinimize();
+    double getIdleTime();
+    QString getSystemUserName();
+    QString getSystemComputerName();
+    QStringList getMyLocalIpAddresses();
+    QString getVersion();
+    int getQtVersion();
+    QString getRandomBytes(int len);
+    double getMemUsage();
+    QStringList getCmdlineArgs();
+    QVariantMap getOsInfo();
+
 
     // directory operations
     bool dirMake(QString jail_type, QString path_rel);
@@ -150,15 +157,8 @@ public slots:
     QVariantMap fileHashDo(qint64 chunksize = 1000000);
     QVariantMap fileHashDone();
 
-    double getIdleTime();
-    QString getSystemUserName();
-    QString getSystemComputerName();
-    QStringList getMyLocalIpAddresses();
-
     QString getHash(QString string, int type = 1); // MD5 default
     QString getHashFromHexStr(QString string_hex, int type = 1);
-
-    qint64 sendUdpMessage(QString hex, QString host, qint64 port);
 
     void showTrayMessage(QString title, QString msg, int type = 0, int delay = 1000);
     void setTrayToolTip(QString tip);
@@ -166,18 +166,13 @@ public slots:
     QVariantMap getStaticPaths();
     void showOptionsDialog();
     QObject *runUnzip(QString zip_filepath_rel, QString extract_dir_rel, bool detach = false);
-#ifdef Q_OS_WIN
-    void JsApi::runUpgrader(QString source_dir, QString dest_dir, bool detach = true);
-#endif
-    QString getVersion();
-    void shutdown();
-    void restart();
-    double getMemUsage();
-    bool getMinimizedStatus();
+
     void clearMemoryCaches();
+
     void printDebug(QByteArray input);
     void debug(QString str);
-    QVariantMap getOsInfo();
+
+
     void windowSetFlags(int flgs);
     int windowGetState();
     void windowSetState(int stat);
@@ -186,15 +181,21 @@ public slots:
     void windowClose();
     void windowShow();
     void windowShowNormal();
-    int getQtVersion();
-    QString getRandomBytes(int len);
+    void windowMinimize();
+    bool windowGetMinimizedStatus();
 
-    QStringList getCmdlineArgs();
+
+
+
 
     QString mapToHex(QVariantMap map);
     QVariantMap hexToMap(QString hex);
     QByteArray mapToByteArray(QVariantMap map);
     QVariantMap byteArrayToMap(QByteArray ba);
+
+#ifdef Q_OS_WIN
+    void JsApi::runUpgrader(QString source_dir, QString dest_dir, bool detach = true);
+#endif
 
     // regular slots
     void onOptionsDialogAccepted();

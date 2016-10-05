@@ -20,32 +20,34 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "server.h"
+#ifndef TCPSERVER_H
+#define TCPSERVER_H
 
-Server::Server(QObject *parent) :
-    QTcpServer(parent)
+#include <QTcpServer>
+#include <QDebug>
+
+#include "client.h"
+
+class TcpServer : public QTcpServer
 {
-    qDebug() << "Level5 [Server] created";
-}
+    Q_OBJECT
 
-Server::~Server() {
-    qDebug() << "Level0 [Server::~Server]";
-}
+public:
+    explicit TcpServer(QObject *parent = 0);
+    ~TcpServer();
 
 
-bool Server::start(quint16 port) {
-    bool success;
-    success = listen(QHostAddress::Any, port);
-    qDebug() << "Level5 [Server] listening on port" << port << success;
-    return success;
-}
+private:
 
-void Server::stop() {
-    qDebug() << "Level0 [Server::stop] closing";
-    close();
-}
+protected:
+    void incomingConnection(qintptr socketDescriptor);
 
-void Server::incomingConnection(qintptr socketDescriptor) {
-    qDebug() << "Level0 [Server::incomingConnection] Descriptor is" << socketDescriptor;
-    emit newSocketDescriptor((int)socketDescriptor);
-}
+signals:
+    void newSocketDescriptor(int sd);
+
+public slots:
+    bool start(quint16 port);
+    void stop();
+};
+
+#endif // TCPSERVER_H

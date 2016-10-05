@@ -24,23 +24,25 @@ RC_FILE = popcorn.rc
 SOURCES += main.cpp\
         mainwindow.cpp \
     jsapi.cpp \
-    server.cpp \
     client.cpp \
     process_manager.cpp \
     optionsdialog.cpp \
     downloader.cpp \
     database.cpp \
-    randomng.c
+    randomng.c \
+    tcpserver.cpp \
+    udpserver.cpp
 
 HEADERS  += \
     mainwindow.h \
     jsapi.h \
-    server.h \
     client.h \
     optionsdialog.h \
     downloader.h \
     database.h \
-    process_manager.h
+    process_manager.h \
+    tcpserver.h \
+    udpserver.h
 
 
 RESOURCES += \
