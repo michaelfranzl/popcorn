@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
     if (!settings->contains("log_to_stdout"))   settings->setValue("log_to_stdout", "false");
     if (!settings->contains("context_menu"))    settings->setValue("context_menu", "true");
     if (!settings->contains("log_threshold"))   settings->setValue("log_threshold", 0);
+    if (!settings->contains("url"))             settings->setValue("url", "");
 
     jail_working_path = settings->value("jail_working").toString();
 

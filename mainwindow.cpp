@@ -128,6 +128,9 @@ void MainWindow::bootstrap(bool is_development) {
         // given on command line has highest priority
         index_file_chosen = "file:///" + application_path + "assets/index.html";
 
+    } else if (settings->value("url").toString() != "") {
+        index_file_chosen = settings->value("url").toString();
+
     } else {
         index_file_chosen = "file:///" + application_path + "boot.html";
     }

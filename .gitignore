@@ -41,3 +41,11 @@ zip_stage
 assets
 adminscripts
 plugins
+*.exe
+*.iss
+platforms
+audio
+sqldrivers
+imageformats
+Output
+*.dll

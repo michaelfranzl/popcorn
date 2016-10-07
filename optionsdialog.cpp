@@ -41,12 +41,14 @@ void OptionsDialog::loadSettings() {
     ui->jailWorkingInput->setText(jail_working_path);
     ui->limitFileReadingCheckBox->setChecked(settings->value("fileread_jailed").toString() == "true");
     ui->labelIniFile->setText(settings->fileName());
+    ui->urlInput->setText(settings->value("url").toString());
 }
 
 void OptionsDialog::accept() {
     qDebug() << "[OptionsDialog::accept]";
     settings->setValue("jail_working", ui->jailWorkingInput->text());
     settings->setValue("fileread_jailed", ui->limitFileReadingCheckBox->isChecked());
+    settings->setValue("url", ui->urlInput->text());
 
     emit accepting();
     close();

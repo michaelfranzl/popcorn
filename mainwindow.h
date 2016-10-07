@@ -60,7 +60,7 @@ public:
     ~MainWindow();
 
     // methods
-    void init(bool is_development = "false");
+    void init(bool is_development);
     void resizeEvent(QResizeEvent *event);
     void moveEvent(QMoveEvent *event);
     void bootstrap(bool is_development);

@@ -194,7 +194,7 @@ public slots:
     QVariantMap byteArrayToMap(QByteArray ba);
 
 #ifdef Q_OS_WIN
-    void JsApi::runUpgrader(QString source_dir, QString dest_dir, bool detach = true);
+    QObject *runUpgrader(bool detach = true);
 #endif
 
     // regular slots

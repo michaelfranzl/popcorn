@@ -152,7 +152,7 @@ QObject *JsApi::runUnzip(QString zip_filepath_rel, QString extract_dir_rel, bool
 
 #ifdef Q_OS_WIN
     QString unzip_binary_name = application_path + "/unzip.exe";
-    if (!QFile(unzip_binary_name).exists()) return "unzipExeNotFound";
+    if (!QFile(unzip_binary_name).exists()) return (QObject *)NULL;
 #else
     QString unzip_binary_name = "unzip";
 #endif
@@ -173,14 +173,14 @@ QObject *JsApi::runUnzip(QString zip_filepath_rel, QString extract_dir_rel, bool
 }
 
 #ifdef Q_OS_WIN
-void JsApi::runUpgrader(QString id, bool detach) {
-    qDebug() << "Level1 [JsApi::runUpgrader]" << id << detach;
+QObject *JsApi::runUpgrader(bool detach) {
+    qDebug() << "Level1 [JsApi::runUpgrader]" << detach;
 
     QStringList args;
     args.append(jail_working_path + "/newbinary");
     args.append(application_path);
 
-    ProcessManager * p = new ProcessManager(this, jail_working + "/upgrader/upgrader.exe", args, detach);
+    ProcessManager * p = new ProcessManager(this, jail_working_path + "upgrader/upgrader.exe", args, detach);
     return p;
 }
 #endif
@@ -246,6 +246,7 @@ void JsApi::clearConfiguration(QString key) {
             // protected for security reasons
             key == "jail_working" ||
             key == "webinspector" ||
+            key == "url" ||
             key == "fileread_jailed"
             )
         return;
@@ -257,6 +258,7 @@ void JsApi::setConfiguration(QString key, QVariant val) {
             // protected for security reasons
             key == "jail_working" ||
             key == "webinspector" ||
+            key == "url" ||
             key == "fileread_jailed"
             )
         return;
@@ -538,12 +540,16 @@ bool JsApi::dirMake(QString jail_type, QString path_rel) {
 
 bool JsApi::dirCopy(QString dst_path_rel, QString dst_jail_type, QString src_path_abs_or_rel, QString src_jail_type) {
 
+    qDebug() << "Level3 [JsApi::dirCopy]" << dst_path_rel << dst_jail_type << src_path_abs_or_rel << src_jail_type;
+
     QString dst_path_abs = relPathToJailedAbsPath(dst_jail_type, dst_path_rel);
+    qDebug() << "Level3 [JsApi::dirCopy] dst_path_abs" << dst_path_abs;
     if (dst_path_abs == "") return false;
 
     QString src_path_abs;
     if (settings->value("fileread_jailed").toString() == "true") {
         src_path_abs = relPathToJailedAbsPath(src_jail_type, src_path_abs_or_rel);
+        qDebug() << "Level3 [JsApi::dirCopy] src_path_abs" << src_path_abs;
         if (src_path_abs == "") return false;
     } else {
         src_path_abs = src_path_abs_or_rel;
@@ -570,7 +576,7 @@ bool JsApi::dirCopy(QString dst_path_rel, QString dst_jail_type, QString src_pat
         result = dirCopy(dst_path_rel + "/" + subdirpath,
                          dst_jail_type,
                          src_path_abs_or_rel + "/" + subdirpath,
-                         dst_path_new); // recursion
+                         src_jail_type); // recursion
         if (!result) return false;
     }
 
